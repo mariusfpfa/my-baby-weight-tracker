@@ -503,6 +503,13 @@
   [data-theme="light"] .btn-primary { color: #fff; }
   [data-theme="light"] .delete-btn { opacity: 0.4; }
 
+
+
+  .sync-card { margin-top: 12px; }
+  .sync-row { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+  .sync-row input { flex:1; min-width: 160px; }
+  .sync-status { color: var(--text-muted); font-size: 0.78rem; line-height: 1.35; margin-top: 8px; }
+  .sync-status strong { color: var(--accent); }
 </style>
 </head>
 <body>
@@ -565,6 +572,34 @@
         </div>
 
         <button class="btn-primary" onclick="saveBabyInfo()">Save</button>
+      </div>
+    </div>
+
+    <!-- Sync / Account Card -->
+    <div class="card sync-card">
+      <div class="card-header" style="justify-content:space-between;">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div class="card-icon">🔐</div>
+          <h2>Private Sync</h2>
+        </div>
+      </div>
+      <div class="card-body" style="padding-top:0;">
+        <div class="sync-row">
+          <input type="text" id="syncUsername" placeholder="username, e.g. marius" autocomplete="username" autocapitalize="none">
+          <input type="text" id="deviceName" placeholder="device name" autocomplete="off">
+        </div>
+        <div class="sync-row" style="margin-top:8px;">
+          <button class="btn-primary" onclick="createAccount()">Create</button>
+          <button class="btn-primary" onclick="loginDevice()">Login</button>
+          <button class="btn-primary" onclick="requestDeviceAccess()">Request access</button>
+          <button class="btn-primary" onclick="syncNow()">Sync now</button>
+        </div>
+        <div class="sync-row" style="margin-top:8px;">
+          <button class="icon-btn" onclick="loadPendingRequests()" title="Pending devices">👀</button>
+          <button class="icon-btn" onclick="logoutSync()" title="Logout this device">🚪</button>
+        </div>
+        <div id="pendingRequests" class="sync-status"></div>
+        <div id="syncStatus" class="sync-status">Optional: create a username to sync across devices without email, phone, or password.</div>
       </div>
     </div>
 
@@ -772,6 +807,9 @@ const WHO = {
 const STORAGE_KEY = 'babyWeightTracker:v2';
 const LEGACY_STORAGE_KEY = 'babyWeightTracker';
 const THEME_STORAGE_KEY = 'babyTrackerTheme';
+const SYNC_API = 'https://mtjxpdenbiqaivfvqmyi.supabase.co/functions/v1/baby-api';
+const DEVICE_KEY_STORAGE = 'babyWeightDeviceKey:v1';
+const SYNC_SESSION_STORAGE = 'babyWeightSyncSession:v1';
 
 let state = {
   version: 2,
@@ -802,6 +840,7 @@ function save() {
     state.updatedAt = new Date().toISOString();
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
     localStorage.setItem(LEGACY_STORAGE_KEY, JSON.stringify(state)); // keeps older deployments compatible
+    queueSync();
   } catch(e) {
     console.error('Could not persist baby tracker data', e);
     alert('Could not save data in this browser. Please export a backup.');
@@ -833,6 +872,7 @@ window.addEventListener('DOMContentLoaded', () => {
   }
 
   renderMeasurements();
+  initSyncUi();
   renderChart();
 });
 
@@ -1352,6 +1392,189 @@ document.addEventListener('touchend', function(e) {
     chart.update('none');
   }
 }, { passive: true });
+
+
+// ─── PASSWORDLESS DEVICE SYNC ────────────────────────────────────────────────
+let syncTimer = null;
+
+function setSyncStatus(msg) {
+  const el = document.getElementById('syncStatus');
+  if (el) el.innerHTML = msg;
+}
+
+function getSession() {
+  try { return JSON.parse(localStorage.getItem(SYNC_SESSION_STORAGE) || 'null'); } catch { return null; }
+}
+
+function setSession(session) {
+  localStorage.setItem(SYNC_SESSION_STORAGE, JSON.stringify(session));
+  if (session?.username) localStorage.setItem('babyWeightLastUsername', session.username);
+}
+
+async function api(action, body = {}, withAuth = false) {
+  const headers = { 'content-type': 'application/json' };
+  if (withAuth) {
+    const session = getSession();
+    if (!session?.sessionToken) throw new Error('This device is not logged in.');
+    headers.authorization = `Bearer ${session.sessionToken}`;
+  }
+  const res = await fetch(`${SYNC_API}/${action}`, { method: 'POST', headers, body: JSON.stringify(body) });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || `Request failed: ${res.status}`);
+  return data;
+}
+
+async function getOrCreateDeviceKey() {
+  const saved = localStorage.getItem(DEVICE_KEY_STORAGE);
+  if (saved) return JSON.parse(saved);
+  const pair = await crypto.subtle.generateKey({ name: 'ECDSA', namedCurve: 'P-256' }, true, ['sign', 'verify']);
+  const privateKey = await crypto.subtle.exportKey('jwk', pair.privateKey);
+  const publicKey = await crypto.subtle.exportKey('jwk', pair.publicKey);
+  const device = { privateKey, publicKey, createdAt: new Date().toISOString() };
+  localStorage.setItem(DEVICE_KEY_STORAGE, JSON.stringify(device));
+  return device;
+}
+
+async function signChallenge(challenge) {
+  const device = await getOrCreateDeviceKey();
+  const key = await crypto.subtle.importKey('jwk', device.privateKey, { name: 'ECDSA', namedCurve: 'P-256' }, false, ['sign']);
+  const sig = await crypto.subtle.sign({ name: 'ECDSA', hash: 'SHA-256' }, key, new TextEncoder().encode(challenge));
+  return btoa(String.fromCharCode(...new Uint8Array(sig)));
+}
+
+function deviceNameValue() {
+  return document.getElementById('deviceName').value.trim() || navigator.userAgent.split(')')[0].replace('(', '').slice(0, 60) || 'My device';
+}
+
+function usernameValue() {
+  return document.getElementById('syncUsername').value.trim();
+}
+
+function initSyncUi() {
+  const last = localStorage.getItem('babyWeightLastUsername') || getSession()?.username || '';
+  if (last) document.getElementById('syncUsername').value = last;
+  document.getElementById('deviceName').value = localStorage.getItem('babyWeightDeviceName') || '';
+  const session = getSession();
+  if (session?.sessionToken) {
+    setSyncStatus(`Logged in as <strong>${session.username}</strong>. Changes sync automatically.`);
+    syncFromCloud().catch(() => {});
+  }
+}
+
+async function createAccount() {
+  try {
+    const username = usernameValue();
+    const deviceName = deviceNameValue();
+    localStorage.setItem('babyWeightDeviceName', deviceName);
+    const device = await getOrCreateDeviceKey();
+    const result = await api('create-account', { username, deviceName, publicKey: device.publicKey });
+    setSession({ username, deviceId: result.device.id, sessionToken: result.sessionToken, expiresAt: result.expiresAt });
+    setSyncStatus(`Created <strong>${username}</strong>. This device is the owner device.`);
+    await syncNow();
+  } catch (err) { setSyncStatus(`⚠️ ${err.message}`); }
+}
+
+async function loginDevice() {
+  try {
+    const username = usernameValue();
+    const session = getSession();
+    if (!session?.deviceId) throw new Error('This device has no approved device id yet. Use Request access first.');
+    const ch = await api('login-challenge', { username, deviceId: session.deviceId });
+    const signature = await signChallenge(ch.challenge);
+    const result = await api('login-verify', { username, deviceId: session.deviceId, challenge: ch.challenge, signature });
+    setSession({ username, deviceId: result.device.id, sessionToken: result.sessionToken, expiresAt: result.expiresAt });
+    setSyncStatus(`Logged in as <strong>${username}</strong>.`);
+    await syncFromCloud();
+  } catch (err) { setSyncStatus(`⚠️ ${err.message}`); }
+}
+
+async function requestDeviceAccess() {
+  try {
+    const username = usernameValue();
+    const deviceName = deviceNameValue();
+    localStorage.setItem('babyWeightDeviceName', deviceName);
+    const device = await getOrCreateDeviceKey();
+    const result = await api('request-device', { username, deviceName, publicKey: device.publicKey });
+    setSession({ username, pendingRequestId: result.request.id });
+    setSyncStatus(`Access requested. Code: <strong>${result.request.code}</strong>. Open the app on an approved device and tap 👀 to approve.`);
+  } catch (err) { setSyncStatus(`⚠️ ${err.message}`); }
+}
+
+async function checkRequestStatus() {
+  const session = getSession();
+  if (!session?.pendingRequestId) return;
+  const result = await api('request-status', { requestId: session.pendingRequestId });
+  if (result.status === 'approved') {
+    setSession({ username: session.username, deviceId: result.device.id, sessionToken: result.sessionToken, expiresAt: result.expiresAt });
+    setSyncStatus('Access approved. This device is now logged in.');
+    await syncFromCloud();
+  } else {
+    setSyncStatus(`Still waiting for approval. Status: ${result.status}.`);
+  }
+}
+
+async function loadPendingRequests() {
+  try {
+    await checkRequestStatus();
+    const result = await api('pending-requests', {}, true);
+    const el = document.getElementById('pendingRequests');
+    if (!result.requests.length) { el.innerHTML = 'No pending device requests.'; return; }
+    el.innerHTML = result.requests.map(r => `<div style="margin:6px 0;padding:8px;border:1px solid var(--border);border-radius:8px;">${r.device_name} · code <strong>${r.code}</strong> <button class="btn-primary" onclick="approveRequest('${r.id}')">Approve</button></div>`).join('');
+  } catch (err) { setSyncStatus(`⚠️ ${err.message}`); }
+}
+
+async function approveRequest(requestId) {
+  try {
+    await api('approve-request', { requestId }, true);
+    setSyncStatus('Device approved. The new device can now tap Login or check status.');
+    await loadPendingRequests();
+  } catch (err) { setSyncStatus(`⚠️ ${err.message}`); }
+}
+
+async function syncFromCloud() {
+  const result = await api('sync-get', {}, true);
+  if (result.profile) {
+    state.name = result.profile.name || state.name;
+    state.birthDate = result.profile.birth_date || state.birthDate;
+    state.gender = result.profile.gender || state.gender;
+    state.unit = result.profile.unit || state.unit;
+    state.rangeWeeks = result.profile.range_weeks || state.rangeWeeks;
+  }
+  if (Array.isArray(result.measurements) && result.measurements.length) {
+    state.measurements = result.measurements.map(m => ({ date: m.measured_on, weightKg: Number(m.weight_kg), ageWeeks: Number(m.age_weeks) }));
+  }
+  save();
+  if (state.birthDate) document.getElementById('birthDate').value = state.birthDate;
+  if (state.name) document.getElementById('babyName').value = state.name;
+  setGender(state.gender || 'boy', false);
+  setUnit(state.unit || 'kg', false);
+  renderBabyDisplay();
+  renderMeasurements();
+  renderChart();
+  setSyncStatus(`Synced from cloud as <strong>${getSession()?.username || ''}</strong>.`);
+}
+
+async function syncNow() {
+  try {
+    const session = getSession();
+    if (!session?.sessionToken) throw new Error('Create or login first.');
+    await api('sync-put', { profile: state, measurements: state.measurements }, true);
+    setSyncStatus(`Synced ${state.measurements.length} measurements as <strong>${session.username}</strong>.`);
+  } catch (err) { setSyncStatus(`⚠️ ${err.message}`); }
+}
+
+function queueSync() {
+  const session = getSession();
+  if (!session?.sessionToken) return;
+  clearTimeout(syncTimer);
+  syncTimer = setTimeout(() => syncNow().catch(() => {}), 800);
+}
+
+async function logoutSync() {
+  try { await api('logout', {}, true); } catch {}
+  localStorage.removeItem(SYNC_SESSION_STORAGE);
+  setSyncStatus('Logged out on this device. Local data is still stored in this browser.');
+}
 
 // ─── END ──────────────────────────────────────────────────────────────────────
 </script>
