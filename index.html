@@ -1,0 +1,1359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Baby Weight Tracker</title>
+
+<!-- PWA / iOS Home Screen -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Baby Weight">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#2a7d6f">
+<link rel="apple-touch-icon" id="appIcon">
+<script>
+  // Generate app icon via canvas (no external image needed)
+  (function() {
+    const c = document.createElement('canvas');
+    c.width = c.height = 180;
+    const ctx = c.getContext('2d');
+    const r = 40;
+    ctx.beginPath();
+    ctx.moveTo(r, 0); ctx.lineTo(180-r, 0);
+    ctx.arcTo(180, 0, 180, r, r);
+    ctx.lineTo(180, 180-r);
+    ctx.arcTo(180, 180, 180-r, 180, r);
+    ctx.lineTo(r, 180);
+    ctx.arcTo(0, 180, 0, 180-r, r);
+    ctx.lineTo(0, r);
+    ctx.arcTo(0, 0, r, 0, r);
+    ctx.closePath();
+    ctx.fillStyle = '#2a7d6f';
+    ctx.fill();
+    ctx.font = '110px serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('🍼', 90, 95);
+    document.getElementById('appIcon').href = c.toDataURL('image/png');
+  })();
+</script>
+<!-- Inline Service Worker for offline support -->
+<script>
+  if ('serviceWorker' in navigator) {
+    const sw = `
+      const CACHE = 'baby-weight-v1';
+      const URLS = [self.location.href];
+      self.addEventListener('install', e => e.waitUntil(caches.open(CACHE).then(c => c.addAll(URLS))));
+      self.addEventListener('fetch', e => e.respondWith(caches.match(e.request).then(r => r || fetch(e.request))));
+    `;
+    const blob = new Blob([sw], {type: 'application/javascript'});
+    navigator.serviceWorker.register(URL.createObjectURL(blob))
+      .catch(() => {}); // silently fail if blocked
+  }
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { overflow-x: hidden; }
+
+  :root {
+    --bg: #0d0f17;
+    --card: #161926;
+    --card2: #1c2030;
+    --accent: #3ecf8e;
+    --accent-light: #0b2a1e;
+    --text: #e4e8f0;
+    --text-muted: #5a6070;
+    --border: #252840;
+    --shadow: 0 2px 20px rgba(0,0,0,0.5);
+    --radius: 14px;
+    --p3: #64748b; --p15: #f59e0b; --p50: #3ecf8e; --p85: #f97316; --p97: #a78bfa; --baby: #e8734a;
+  }
+
+  [data-theme="light"] {
+    --bg: #f7f5f2;
+    --card: #ffffff;
+    --card2: #fafaf9;
+    --accent: #2a7d6f;
+    --accent-light: #e6f4f1;
+    --text: #1a1a2e;
+    --text-muted: #6b7280;
+    --border: #e5e0d8;
+    --shadow: 0 2px 16px rgba(0,0,0,0.07);
+    --p3: #94a3b8; --p15: #d97706; --p50: #059669; --p85: #ea580c; --p97: #7c3aed; --baby: #e8734a;
+  }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  header {
+    background: var(--card);
+    border-bottom: 1px solid var(--border);
+    padding: 18px 28px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  header .logo {
+    width: 38px; height: 38px;
+    background: var(--accent);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
+    flex-shrink: 0;
+  }
+
+  header h1 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.4rem;
+    font-weight: 400;
+    color: var(--text);
+    letter-spacing: -0.3px;
+  }
+
+  header p {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    margin-top: 1px;
+  }
+
+  .main {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 24px 20px 40px;
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    gap: 20px;
+    align-items: stretch;
+  }
+
+  @media (max-width: 800px) {
+    .main { grid-template-columns: 1fr; }
+    header h1 { font-size: 1.2rem; }
+    .left-col { order: 2; }
+    .right-col { order: 1; }
+  }
+
+  .card {
+    background: var(--card);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+
+  .card-header {
+    padding: 16px 20px 14px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .card-header h2 {
+    font-size: 0.9rem;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+
+  .card-icon {
+    width: 28px; height: 28px;
+    background: var(--accent-light);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px;
+  }
+
+  .card-body { padding: 18px 20px; }
+
+  label {
+    display: block;
+    font-size: 0.78rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 6px;
+  }
+
+  input[type="date"], input[type="number"], input[type="text"], select {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1.5px solid var(--border);
+    border-radius: 9px;
+    font-family: inherit;
+    font-size: 0.9rem;
+    color: var(--text);
+    background: var(--card2);
+    transition: border-color 0.15s, box-shadow 0.15s;
+    outline: none;
+    margin-bottom: 14px;
+    -webkit-appearance: none;
+    color-scheme: dark;
+  }
+  [data-theme="light"] input[type="date"],
+  [data-theme="light"] input[type="number"],
+  [data-theme="light"] input[type="text"],
+  [data-theme="light"] select { color-scheme: light; }
+
+  input:focus, select:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(62,207,142,0.12);
+    background: var(--card2);
+  }
+
+  [data-theme="light"] input:focus,
+  [data-theme="light"] select:focus {
+    box-shadow: 0 0 0 3px rgba(42,125,111,0.12);
+    background: #ffffff;
+  }
+
+  .gender-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+
+  .gender-btn {
+    padding: 10px;
+    border: 1.5px solid var(--border);
+    border-radius: 9px;
+    background: var(--card2);
+    font-family: inherit;
+    font-size: 0.88rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+    color: var(--text-muted);
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+  }
+
+  .gender-btn.active-boy {
+    background: #112244;
+    border-color: #3b82f6;
+    color: #60a5fa;
+  }
+
+  .gender-btn.active-girl {
+    background: #2a1030;
+    border-color: #ec4899;
+    color: #f472b6;
+  }
+
+  .unit-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+
+  .unit-btn {
+    padding: 8px;
+    border: 1.5px solid var(--border);
+    border-radius: 9px;
+    background: var(--card2);
+    font-family: inherit;
+    font-size: 0.82rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+    color: var(--text-muted);
+    text-align: center;
+  }
+
+  .unit-btn.active {
+    background: var(--accent-light);
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  .btn-primary {
+    width: 100%;
+    padding: 11px;
+    background: var(--accent);
+    color: #0d1a13;
+    border: none;
+    border-radius: 9px;
+    font-family: inherit;
+    font-size: 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.1s;
+  }
+
+  .btn-primary:hover { background: #34b87a; }
+  .btn-primary:active { transform: scale(0.98); }
+  [data-theme="light"] .btn-primary:hover { background: #22665a; }
+
+  .measurements-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .measurement-item {
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    margin-bottom: 4px;
+    background: var(--card2);
+    border: 1px solid var(--border);
+    font-size: 0.85rem;
+  }
+
+  .measurement-item .age-badge {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    margin-top: 2px;
+  }
+
+  .measurement-item .weight-val {
+    font-weight: 600;
+    color: var(--accent);
+    white-space: nowrap;
+  }
+
+  .percentile-badge {
+    font-size: 0.7rem;
+    padding: 2px 7px;
+    border-radius: 99px;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .delete-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--text-muted);
+    font-size: 14px;
+    padding: 2px 4px;
+    border-radius: 4px;
+    transition: color 0.1s;
+    opacity: 0.5;
+  }
+
+  .delete-btn:hover { color: #ef4444; }
+
+  .empty-state {
+    text-align: center;
+    padding: 24px 0;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+  }
+
+  .empty-state .emoji { font-size: 2rem; display: block; margin-bottom: 8px; }
+
+  .chart-wrapper { position: relative; padding: 4px; }
+
+  .chart-canvas-wrap {
+    position: relative;
+    height: 420px;
+  }
+
+  @media (max-width: 600px) {
+    .chart-canvas-wrap { height: 300px; }
+  }
+
+  .range-pills {
+    display: flex;
+    gap: 6px;
+    padding: 14px 20px 0;
+    flex-wrap: wrap;
+  }
+
+  .range-pill {
+    padding: 5px 12px;
+    border-radius: 99px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1.5px solid var(--border);
+    background: var(--card2);
+    color: var(--text-muted);
+    transition: all 0.15s;
+  }
+
+  .range-pill.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #0d1a13;
+  }
+
+  .legend-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 16px;
+    padding: 14px 20px 16px;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+  }
+
+  .legend-line { width: 22px; height: 2.5px; border-radius: 2px; }
+
+  .legend-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    border: 2px solid;
+  }
+
+  .left-col { display: flex; flex-direction: column; gap: 20px; height: 100%; }
+  .left-col .measurements-card { flex: 1; display: flex; flex-direction: column; }
+  .left-col .measurements-card .card-body { flex: 1; overflow-y: auto; }
+  .right-col { display: flex; flex-direction: column; gap: 20px; }
+
+  .csv-btn {
+    width: 32px; height: 32px;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    background: var(--card2);
+    font-size: 15px;
+    cursor: pointer;
+    transition: all 0.15s;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .csv-btn:hover { background: var(--accent-light); border-color: var(--accent); }
+
+  .baby-display {
+    padding: 14px 20px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .baby-avatar {
+    width: 46px; height: 46px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 24px;
+    flex-shrink: 0;
+  }
+  .baby-avatar.boy { background: #112244; }
+  .baby-avatar.girl { background: #2a1030; }
+  .baby-display-info h3 { font-size: 1rem; font-weight: 600; line-height: 1.2; color: var(--text); }
+  .baby-display-info p { font-size: 0.75rem; color: var(--text-muted); margin-top: 3px; }
+
+  .icon-btn {
+    width: 32px; height: 32px;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    background: var(--card2);
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 15px;
+    transition: all 0.15s;
+    flex-shrink: 0;
+  }
+  .icon-btn:hover { background: var(--accent-light); border-color: var(--accent); }
+  .icon-btn.active { background: var(--accent); border-color: var(--accent); }
+
+  .collapsible-body {
+    overflow: hidden;
+    transition: max-height 0.25s ease, opacity 0.2s ease;
+    max-height: 0;
+    opacity: 0;
+  }
+  .collapsible-body.open { max-height: 500px; opacity: 1; }
+  .collapsible-divider { height: 1px; background: var(--border); margin: 0 20px; }
+
+  .add-form-wrap { padding: 14px 20px; }
+  .add-form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+  .add-form-row input { margin-bottom: 0; }
+  .add-form-wrap label { margin-bottom: 4px; }
+  .add-form-wrap input[type="date"],
+  .add-form-wrap input[type="number"] { margin-bottom: 0; }
+
+  /* Light theme overrides for hardcoded dark values */
+  [data-theme="light"] .gender-btn { background: var(--card2); }
+  [data-theme="light"] .gender-btn.active-boy { background: #eff6ff; border-color: #3b82f6; color: #1d4ed8; }
+  [data-theme="light"] .gender-btn.active-girl { background: #fdf2f8; border-color: #ec4899; color: #be185d; }
+  [data-theme="light"] .unit-btn { background: var(--card2); }
+  [data-theme="light"] .baby-avatar.boy { background: #eff6ff; }
+  [data-theme="light"] .baby-avatar.girl { background: #fdf2f8; }
+  [data-theme="light"] .icon-btn,
+  [data-theme="light"] .csv-btn { background: var(--card2); }
+  [data-theme="light"] .range-pill { background: var(--card2); }
+  [data-theme="light"] .range-pill.active { color: #fff; }
+  [data-theme="light"] .measurement-item { background: var(--card2); }
+  [data-theme="light"] .btn-primary { color: #fff; }
+  [data-theme="light"] .delete-btn { opacity: 0.4; }
+
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">🍼</div>
+  <div style="flex:1;">
+    <h1>Baby Weight Tracker</h1>
+    <p>Plot your baby's growth against WHO standards</p>
+  </div>
+  <button id="themeToggle" onclick="toggleTheme()" title="Toggle theme" style="
+    width:38px;height:38px;border-radius:10px;border:1.5px solid var(--border);
+    background:var(--card2);cursor:pointer;font-size:18px;
+    display:flex;align-items:center;justify-content:center;
+    transition:all 0.15s;flex-shrink:0;
+  ">🌙</button>
+</header>
+
+<div class="main">
+  <!-- LEFT COLUMN -->
+  <div class="left-col" style="display:flex;flex-direction:column;gap:20px;">
+
+    <!-- Baby Info: collapsible -->
+    <div class="card">
+      <div class="card-header" style="justify-content:space-between;">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div class="card-icon">👶</div>
+          <h2>Baby Info</h2>
+        </div>
+        <button class="icon-btn" id="editBabyBtn" onclick="toggleBabyEdit()" title="Edit">✏️</button>
+      </div>
+
+      <!-- Display mode -->
+      <div id="babyDisplay" class="baby-display" style="display:none;">
+        <div class="baby-avatar boy" id="babyAvatar">👶</div>
+        <div class="baby-display-info">
+          <h3 id="displayName">—</h3>
+          <p id="displayMeta">—</p>
+        </div>
+      </div>
+
+      <!-- Edit mode -->
+      <div id="babyEditForm" class="card-body">
+        <label>Name</label>
+        <input type="text" id="babyName" placeholder="e.g. Luca" style="margin-bottom:14px;">
+
+        <label>Birth Date</label>
+        <input type="date" id="birthDate" max="">
+
+        <label>Gender</label>
+        <div class="gender-row">
+          <button class="gender-btn active-boy" id="btnBoy" onclick="setGender('boy')">♂ Boy</button>
+          <button class="gender-btn" id="btnGirl" onclick="setGender('girl')">♀ Girl</button>
+        </div>
+
+        <label>Weight Unit</label>
+        <div class="unit-row">
+          <button class="unit-btn active" id="unitKg" onclick="setUnit('kg')">kg</button>
+          <button class="unit-btn" id="unitLbs" onclick="setUnit('lbs')">lbs / oz</button>
+        </div>
+
+        <button class="btn-primary" onclick="saveBabyInfo()">Save</button>
+      </div>
+    </div>
+
+    <!-- Measurements (with inline Add form) -->
+    <div class="card measurements-card">
+      <div class="card-header" style="justify-content:space-between;">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div class="card-icon">📋</div>
+          <h2>Measurements</h2>
+        </div>
+        <div style="display:flex;gap:6px;align-items:center;">
+          <button class="icon-btn" onclick="importCSV()" title="Import CSV measurements">📥</button>
+          <button class="icon-btn" onclick="exportCSV()" title="Export CSV measurements">📤</button>
+          <button class="icon-btn" onclick="importBackup()" title="Restore full backup">♻️</button>
+          <button class="icon-btn" onclick="exportBackup()" title="Save full backup">💾</button>
+          <button class="icon-btn" id="toggleAddBtn" onclick="toggleAddForm()" title="Add measurement">＋</button>
+          <input type="file" id="csvFileInput" accept=".csv" style="display:none" onchange="handleCSVFile(event)">
+          <input type="file" id="backupFileInput" accept="application/json,.json" style="display:none" onchange="handleBackupFile(event)">
+        </div>
+      </div>
+
+      <!-- Collapsible add form -->
+      <div class="collapsible-body" id="addFormBody">
+        <div class="collapsible-divider"></div>
+        <div class="add-form-wrap">
+          <div class="add-form-row">
+            <div>
+              <label>Date</label>
+              <input type="date" id="measureDate">
+            </div>
+            <div id="kgInput">
+              <label>Weight (kg)</label>
+              <input type="number" id="weightKg" step="0.01" min="0" max="30" placeholder="e.g. 5.47">
+            </div>
+          </div>
+          <div id="lbsInput" style="display:none;">
+            <div class="add-form-row">
+              <div>
+                <label>Pounds</label>
+                <input type="number" id="weightLbs" step="1" min="0" max="60" placeholder="e.g. 12">
+              </div>
+              <div>
+                <label>Ounces</label>
+                <input type="number" id="weightOz" step="0.1" min="0" max="15.9" placeholder="e.g. 1">
+              </div>
+            </div>
+          </div>
+          <button class="btn-primary" onclick="addMeasurement()">Add</button>
+        </div>
+      </div>
+
+      <!-- List -->
+      <div class="card-body" style="padding-top:10px;" id="measurementsListWrap">
+        <div id="measurementsList">
+          <div class="empty-state">
+            <span class="emoji">📊</span>
+            Tap ＋ above to add measurements
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- RIGHT COLUMN: Chart -->
+  <div class="right-col">
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon">📈</div>
+        <h2 id="chartTitle">Weight vs WHO Percentiles — Boy</h2>
+      </div>
+
+      <div class="range-pills">
+        <button class="range-pill active" onclick="setRange(13)" id="pill13">13 weeks</button>
+        <button class="range-pill" onclick="setRange(26)" id="pill26">6 months</button>
+        <button class="range-pill" onclick="setRange(52)" id="pill52">1 year</button>
+        <button class="range-pill" onclick="setRange(104)" id="pill104">2 years</button>
+      </div>
+
+      <div class="chart-wrapper">
+        <div class="chart-canvas-wrap">
+          <canvas id="weightChart"></canvas>
+        </div>
+      </div>
+
+      <div class="legend-grid">
+        <div class="legend-item">
+          <div class="legend-line" style="background:var(--p3)"></div>
+          <span>3rd percentile</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-line" style="background:var(--p15)"></div>
+          <span>15th percentile</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-line" style="background:var(--p50)"></div>
+          <span>50th percentile</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-line" style="background:var(--p85)"></div>
+          <span>85th percentile</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-line" style="background:var(--p97)"></div>
+          <span>97th percentile</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-dot" style="border-color:var(--baby);background:rgba(232,115,74,0.2)"></div>
+          <span>Your baby</span>
+        </div>
+      </div>
+
+      <div style="padding:0 20px 18px;">
+        <p style="font-size:0.72rem;color:var(--text-muted);opacity:0.7;line-height:1.6;">
+          Data source: WHO Child Growth Standards. These charts are for informational use only.
+          Always consult your pediatrician for medical advice about your baby's growth.
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── THEME ────────────────────────────────────────────────────────────────────
+function applyTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+  document.getElementById('themeToggle').textContent = theme === 'dark' ? '🌙' : '☀️';
+  // Update Chart.js if it exists
+  if (chart) {
+    const isDark = theme === 'dark';
+    const gridColor = isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.06)';
+    const tickColor = isDark ? '#5a6070' : '#9ca3af';
+    const borderColor = isDark ? '#252840' : '#e5e0d8';
+    chart.options.scales.x.grid.color = gridColor;
+    chart.options.scales.x.ticks.color = tickColor;
+    chart.options.scales.x.border.color = borderColor;
+    chart.options.scales.x.title.color = tickColor;
+    chart.options.scales.y.grid.color = gridColor;
+    chart.options.scales.y.ticks.color = tickColor;
+    chart.options.scales.y.border.color = borderColor;
+    chart.options.scales.y.title.color = tickColor;
+    chart.options.plugins.tooltip.backgroundColor = isDark ? 'rgba(22,25,38,0.97)' : 'rgba(255,255,255,0.97)';
+    chart.options.plugins.tooltip.titleColor = isDark ? '#e4e8f0' : '#1a1a2e';
+    chart.options.plugins.tooltip.bodyColor = isDark ? '#a0a8b8' : '#6b7280';
+    chart.options.plugins.tooltip.borderColor = isDark ? '#252840' : '#e5e0d8';
+    chart.update('none');
+  }
+}
+
+function toggleTheme() {
+  const current = document.documentElement.getAttribute('data-theme') || 'dark';
+  const next = current === 'dark' ? 'light' : 'dark';
+  localStorage.setItem(THEME_STORAGE_KEY, next);
+  applyTheme(next);
+  if (chart) { chart.destroy(); chart = null; }
+  renderChart();
+  renderMeasurements();
+}
+
+// ─── WHO DATA ─────────────────────────────────────────────────────────────────
+// Source: Official WHO Child Growth Standards PDFs (wfa-boys/girls-0-5-percentiles.pdf)
+// Format: [age_months, P3, P15, P50, P85, P97]
+const WHO = {
+  boy: [
+    [ 0, 2.5, 2.9, 3.3, 3.9, 4.3],
+    [ 1, 3.4, 3.9, 4.5, 5.1, 5.7],
+    [ 2, 4.4, 4.9, 5.6, 6.3, 7.0],
+    [ 3, 5.1, 5.6, 6.4, 7.2, 7.9],
+    [ 4, 5.6, 6.2, 7.0, 7.9, 8.6],
+    [ 5, 6.1, 6.7, 7.5, 8.4, 9.2],
+    [ 6, 6.4, 7.1, 7.9, 8.9, 9.7],
+    [ 7, 6.7, 7.4, 8.3, 9.3,10.2],
+    [ 8, 7.0, 7.7, 8.6, 9.6,10.5],
+    [ 9, 7.2, 7.9, 8.9,10.0,10.9],
+    [10, 7.5, 8.2, 9.2,10.3,11.2],
+    [11, 7.7, 8.4, 9.4,10.5,11.5],
+    [12, 7.8, 8.6, 9.6,10.8,11.8],
+    [15, 8.4, 9.2,10.3,11.6,12.7],
+    [18, 8.9, 9.7,10.9,12.3,13.5],
+    [21, 9.3,10.3,11.5,13.0,14.3],
+    [24, 9.8,10.8,12.2,13.7,15.1],
+  ],
+  girl: [
+    [ 0, 2.4, 2.8, 3.2, 3.7, 4.2],
+    [ 1, 3.2, 3.6, 4.2, 4.8, 5.4],
+    [ 2, 4.0, 4.5, 5.1, 5.9, 6.5],
+    [ 3, 4.6, 5.1, 5.8, 6.7, 7.4],
+    [ 4, 5.1, 5.6, 6.4, 7.3, 8.1],
+    [ 5, 5.5, 6.1, 6.9, 7.8, 8.7],
+    [ 6, 5.8, 6.4, 7.3, 8.3, 9.2],
+    [ 7, 6.1, 6.7, 7.6, 8.7, 9.6],
+    [ 8, 6.3, 7.0, 7.9, 9.0,10.0],
+    [ 9, 6.6, 7.3, 8.2, 9.3,10.4],
+    [10, 6.8, 7.5, 8.5, 9.6,10.7],
+    [11, 7.0, 7.7, 8.7, 9.9,11.0],
+    [12, 7.1, 7.9, 8.9,10.2,11.3],
+    [15, 7.7, 8.5, 9.6,10.9,12.2],
+    [18, 8.2, 9.0,10.2,11.6,13.0],
+    [21, 8.7, 9.6,10.9,12.4,13.8],
+    [24, 9.2,10.1,11.5,13.1,14.6],
+  ]
+};
+
+// ─── STATE ────────────────────────────────────────────────────────────────────
+const STORAGE_KEY = 'babyWeightTracker:v2';
+const LEGACY_STORAGE_KEY = 'babyWeightTracker';
+const THEME_STORAGE_KEY = 'babyTrackerTheme';
+
+let state = {
+  version: 2,
+  updatedAt: null,
+  gender: 'boy',
+  unit: 'kg',
+  rangeWeeks: 13,
+  measurements: [],
+  name: '',
+  birthDate: ''
+};
+
+// Load from persistent browser storage.
+// Data survives refreshes, browser restarts, and app redeploys on the same device/browser.
+// Use the JSON backup buttons for an extra portable copy or to move data to another device.
+try {
+  const saved = localStorage.getItem(STORAGE_KEY) || localStorage.getItem(LEGACY_STORAGE_KEY);
+  if (saved) {
+    const loaded = JSON.parse(saved);
+    state = { ...state, ...loaded, version: 2 };
+  }
+} catch(e) {
+  console.warn('Could not load saved baby tracker data', e);
+}
+
+function save() {
+  try {
+    state.updatedAt = new Date().toISOString();
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    localStorage.setItem(LEGACY_STORAGE_KEY, JSON.stringify(state)); // keeps older deployments compatible
+  } catch(e) {
+    console.error('Could not persist baby tracker data', e);
+    alert('Could not save data in this browser. Please export a backup.');
+  }
+}
+
+// ─── INIT UI ──────────────────────────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', () => {
+  // Apply saved theme
+  const savedTheme = localStorage.getItem(THEME_STORAGE_KEY) || 'dark';
+  applyTheme(savedTheme);
+
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('birthDate').max = today;
+  document.getElementById('measureDate').max = today;
+  document.getElementById('measureDate').value = today;
+
+  if (state.birthDate) document.getElementById('birthDate').value = state.birthDate;
+  if (state.name) document.getElementById('babyName').value = state.name;
+  setGender(state.gender, false);
+  setUnit(state.unit, false);
+
+  // Show display or edit mode based on whether baby info is configured
+  if (state.birthDate) {
+    renderBabyDisplay();
+  } else {
+    document.getElementById('babyDisplay').style.display = 'none';
+    document.getElementById('babyEditForm').style.display = 'block';
+  }
+
+  renderMeasurements();
+  renderChart();
+});
+
+// ─── BABY INFO DISPLAY ────────────────────────────────────────────────────────
+function renderBabyDisplay() {
+  const name = state.name || 'Baby';
+  const bd = state.birthDate;
+  const gender = state.gender;
+  const unit = state.unit;
+
+  document.getElementById('displayName').textContent = name;
+
+  let meta = '';
+  if (bd) {
+    const d = new Date(bd);
+    meta += `Born ${d.getDate().toString().padStart(2,'0')}.${(d.getMonth()+1).toString().padStart(2,'0')}.${d.getFullYear()}`;
+  }
+  meta += ` · ${gender === 'boy' ? '♂ Boy' : '♀ Girl'} · ${unit}`;
+  document.getElementById('displayMeta').textContent = meta;
+
+  const avatar = document.getElementById('babyAvatar');
+  avatar.className = `baby-avatar ${gender}`;
+  avatar.textContent = gender === 'boy' ? '👦' : '👧';
+
+  document.getElementById('babyDisplay').style.display = 'flex';
+  document.getElementById('babyEditForm').style.display = 'none';
+}
+
+function toggleBabyEdit() {
+  const form = document.getElementById('babyEditForm');
+  const display = document.getElementById('babyDisplay');
+  const isEditing = form.style.display !== 'none';
+  if (isEditing) {
+    // cancel — revert to display if we have data
+    if (state.birthDate) {
+      renderBabyDisplay();
+    }
+  } else {
+    display.style.display = 'none';
+    form.style.display = 'block';
+    document.getElementById('babyName').value = state.name || '';
+    document.getElementById('birthDate').value = state.birthDate || '';
+  }
+}
+
+function saveBabyInfo() {
+  const name = document.getElementById('babyName').value.trim();
+  const bd = document.getElementById('birthDate').value;
+  if (!bd) { alert('Please enter a birth date.'); return; }
+
+  const prevBd = state.birthDate;
+  state.name = name;
+  state.birthDate = bd;
+
+  // Recalculate age weeks if birth date changed
+  if (prevBd !== bd && state.measurements.length) {
+    state.measurements = state.measurements.map(m => {
+      const ageWeeks = (new Date(m.date) - new Date(bd)) / (1000*60*60*24*7);
+      return { ...m, ageWeeks: Math.round(ageWeeks * 100) / 100 };
+    }).filter(m => m.ageWeeks >= 0);
+  }
+
+  save();
+  renderBabyDisplay();
+  renderMeasurements();
+  renderChart();
+}
+
+// ─── ADD FORM TOGGLE ─────────────────────────────────────────────────────────
+function toggleAddForm() {
+  const body = document.getElementById('addFormBody');
+  const btn = document.getElementById('toggleAddBtn');
+  const isOpen = body.classList.contains('open');
+  body.classList.toggle('open', !isOpen);
+  btn.classList.toggle('active', !isOpen);
+}
+
+// ─── GENDER ───────────────────────────────────────────────────────────────────
+function setGender(g, doSave = true) {
+  state.gender = g;
+  document.getElementById('btnBoy').className = 'gender-btn' + (g === 'boy' ? ' active-boy' : '');
+  document.getElementById('btnGirl').className = 'gender-btn' + (g === 'girl' ? ' active-girl' : '');
+  document.getElementById('chartTitle').textContent =
+    `Weight vs WHO Percentiles — ${g === 'boy' ? 'Boy' : 'Girl'}`;
+  if (doSave) { save(); renderChart(); }
+}
+
+// ─── UNIT ─────────────────────────────────────────────────────────────────────
+function setUnit(u, doSave = true) {
+  state.unit = u;
+  document.getElementById('unitKg').className = 'unit-btn' + (u === 'kg' ? ' active' : '');
+  document.getElementById('unitLbs').className = 'unit-btn' + (u === 'lbs' ? ' active' : '');
+  document.getElementById('kgInput').style.display = u === 'kg' ? 'block' : 'none';
+  document.getElementById('lbsInput').style.display = u === 'lbs' ? 'block' : 'none';
+  if (doSave) { save(); renderMeasurements(); renderChart(); }
+}
+
+// ─── RANGE ────────────────────────────────────────────────────────────────────
+function setRange(weeks) {
+  state.rangeWeeks = weeks;
+  ['13','26','52','104'].forEach(w => {
+    document.getElementById('pill'+w).className = 'range-pill' + (weeks == w ? ' active' : '');
+  });
+  renderChart();
+}
+
+// ─── ADD MEASUREMENT ──────────────────────────────────────────────────────────
+function addMeasurement() {
+  const bd = document.getElementById('birthDate').value;
+  const md = document.getElementById('measureDate').value;
+  if (!bd) { alert('Please enter your baby\'s birth date first.'); return; }
+  if (!md) { alert('Please enter the measurement date.'); return; }
+
+  let weightKg;
+  if (state.unit === 'kg') {
+    weightKg = parseFloat(document.getElementById('weightKg').value);
+    if (isNaN(weightKg) || weightKg <= 0) { alert('Please enter a valid weight.'); return; }
+  } else {
+    const lbs = parseFloat(document.getElementById('weightLbs').value) || 0;
+    const oz = parseFloat(document.getElementById('weightOz').value) || 0;
+    weightKg = (lbs + oz/16) * 0.453592;
+    if (weightKg <= 0) { alert('Please enter a valid weight.'); return; }
+  }
+
+  if (weightKg > 30 || weightKg < 0.5) { alert('Weight seems out of range. Please check the value.'); return; }
+
+  const measureMs = new Date(md).getTime();
+  const birthMs = new Date(bd).getTime();
+  if (measureMs < birthMs) { alert('Measurement date cannot be before birth date.'); return; }
+
+  const ageWeeks = (measureMs - birthMs) / (1000 * 60 * 60 * 24 * 7);
+  if (ageWeeks > 120) { alert('Age exceeds 2 years. Please check dates.'); return; }
+
+  state.birthDate = bd;
+  state.measurements.push({ date: md, weightKg: Math.round(weightKg * 100) / 100, ageWeeks: Math.round(ageWeeks * 100) / 100 });
+  state.measurements.sort((a, b) => a.ageWeeks - b.ageWeeks);
+
+  // Clear inputs
+  document.getElementById('weightKg').value = '';
+  document.getElementById('weightLbs').value = '';
+  document.getElementById('weightOz').value = '';
+
+  save();
+  renderMeasurements();
+  renderChart();
+
+  // Close add form
+  document.getElementById('addFormBody').classList.remove('open');
+  document.getElementById('toggleAddBtn').classList.remove('active');
+}
+
+// ─── DELETE MEASUREMENT ───────────────────────────────────────────────────────
+function deleteMeasurement(idx) {
+  state.measurements.splice(idx, 1);
+  save();
+  renderMeasurements();
+  renderChart();
+}
+
+// ─── PERCENTILE ESTIMATE ──────────────────────────────────────────────────────
+function getPercentile(ageWeeks, weightKg, gender) {
+  const data = WHO[gender];
+  const ageMo = ageWeeks / 4.348;
+  // Find surrounding months
+  let lo = data[0], hi = data[data.length - 1];
+  for (let i = 0; i < data.length - 1; i++) {
+    if (ageMo >= data[i][0] && ageMo <= data[i+1][0]) {
+      lo = data[i]; hi = data[i+1]; break;
+    }
+  }
+  // Interpolate each percentile
+  const t = lo[0] === hi[0] ? 0 : (ageMo - lo[0]) / (hi[0] - lo[0]);
+  const p3  = lo[1] + t * (hi[1] - lo[1]);
+  const p15 = lo[2] + t * (hi[2] - lo[2]);
+  const p50 = lo[3] + t * (hi[3] - lo[3]);
+  const p85 = lo[4] + t * (hi[4] - lo[4]);
+  const p97 = lo[5] + t * (hi[5] - lo[5]);
+
+  const isDark = (document.documentElement.getAttribute('data-theme') || 'dark') === 'dark';
+  if (weightKg < p3)  return { pct: '<3rd',    color: isDark?'#94a3b8':'#64748b', bg: isDark?'#1e2230':'#f1f5f9' };
+  if (weightKg < p15) return { pct: '3–15th',  color: isDark?'#fbbf24':'#d97706', bg: isDark?'#2a1f08':'#fffbeb' };
+  if (weightKg < p50) return { pct: '15–50th', color: isDark?'#3ecf8e':'#059669', bg: isDark?'#0b2a1e':'#ecfdf5' };
+  if (weightKg < p85) return { pct: '50–85th', color: isDark?'#3ecf8e':'#059669', bg: isDark?'#0b2a1e':'#ecfdf5' };
+  if (weightKg < p97) return { pct: '85–97th', color: isDark?'#fb923c':'#ea580c', bg: isDark?'#2a1508':'#fff7ed' };
+  return                      { pct: '>97th',   color: isDark?'#a78bfa':'#7c3aed', bg: isDark?'#1e1030':'#faf5ff' };
+}
+
+// ─── RENDER MEASUREMENTS LIST ─────────────────────────────────────────────────
+let showAllMeasurements = false;
+
+function renderMeasurements() {
+  const el = document.getElementById('measurementsList');
+  if (!state.measurements.length) {
+    el.innerHTML = `<div class="empty-state"><span class="emoji">📊</span>Tap ＋ above to add measurements</div>`;
+    showAllMeasurements = false;
+    return;
+  }
+
+  // Reversed (latest first), keeping original indices for delete
+  const reversed = state.measurements.map((m, i) => ({ ...m, _idx: i })).reverse();
+  const total = reversed.length;
+  const LIMIT = 5;
+  const visible = showAllMeasurements ? reversed : reversed.slice(0, LIMIT);
+
+  const items = visible.map(m => {
+    const disp = state.unit === 'kg'
+      ? `${m.weightKg.toFixed(2)} kg`
+      : `${(m.weightKg / 0.453592).toFixed(1)} lbs`;
+    const weeks = m.ageWeeks.toFixed(1);
+    const pInfo = getPercentile(m.ageWeeks, m.weightKg, state.gender);
+    return `
+      <div class="measurement-item">
+        <div>
+          <div style="font-weight:500">${m.date}</div>
+          <div class="age-badge">Age: ${weeks} weeks</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px">
+          <span class="weight-val">${disp}</span>
+          <span class="percentile-badge" style="color:${pInfo.color};background:${pInfo.bg}">${pInfo.pct}</span>
+        </div>
+        <button class="delete-btn" onclick="deleteMeasurement(${m._idx})" title="Delete">✕</button>
+      </div>`;
+  }).join('');
+
+  const toggleBtn = total > LIMIT ? `
+    <button onclick="toggleShowAll()" style="
+      width:100%;margin-top:8px;padding:9px;
+      background:none;border:1.5px solid var(--border);border-radius:9px;
+      font-family:inherit;font-size:0.8rem;font-weight:600;
+      color:var(--text-muted);cursor:pointer;transition:all 0.15s;
+    " onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'"
+       onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text-muted)'">
+      ${showAllMeasurements ? '▲ Show less' : `▼ Show all ${total} measurements`}
+    </button>` : '';
+
+  el.innerHTML = items + toggleBtn;
+}
+
+function toggleShowAll() {
+  showAllMeasurements = !showAllMeasurements;
+  renderMeasurements();
+}
+
+// ─── GENERATE WHO CURVE POINTS ────────────────────────────────────────────────
+function getWHOCurve(gender, pIdx, maxWeeks) {
+  const data = WHO[gender];
+  const pts = [];
+
+  // Generate dense points via interpolation
+  const step = 0.5; // half-week steps
+  for (let w = 0; w <= maxWeeks; w += step) {
+    const ageMo = w / 4.348;
+    let lo = data[0], hi = data[data.length - 1];
+    for (let i = 0; i < data.length - 1; i++) {
+      if (ageMo >= data[i][0] && ageMo <= data[i+1][0]) { lo = data[i]; hi = data[i+1]; break; }
+    }
+    if (ageMo > data[data.length - 1][0]) break;
+    const t = lo[0] === hi[0] ? 0 : (ageMo - lo[0]) / (hi[0] - lo[0]);
+    const val = lo[pIdx] + t * (hi[pIdx] - lo[pIdx]);
+    pts.push({ x: Math.round(w * 100) / 100, y: Math.round(val * 100) / 100 });
+  }
+  return pts;
+}
+
+// ─── CHART ────────────────────────────────────────────────────────────────────
+let chart = null;
+
+function renderChart() {
+  const ctx = document.getElementById('weightChart').getContext('2d');
+  const maxW = state.rangeWeeks;
+
+  const commonLine = { pointRadius: 0, pointHoverRadius: 0, tension: 0.4, borderWidth: 2, fill: false };
+  const yLabel = state.unit === 'kg' ? 'Weight (kg)' : 'Weight (lbs)';
+  const mult = state.unit === 'kg' ? 1 : 1 / 0.453592;
+
+  function curve(pIdx, color, label) {
+    return {
+      label,
+      data: getWHOCurve(state.gender, pIdx, maxW).map(p => ({ x: p.x, y: Math.round(p.y * mult * 100) / 100 })),
+      borderColor: color,
+      borderDash: [],
+      ...commonLine
+    };
+  }
+
+  const babyData = state.measurements
+    .filter(m => m.ageWeeks <= maxW)
+    .map(m => ({ x: m.ageWeeks, y: Math.round(m.weightKg * mult * 100) / 100 }));
+
+  const isDark = (document.documentElement.getAttribute('data-theme') || 'dark') === 'dark';
+  const colors = {
+    p3:   isDark ? '#64748b' : '#94a3b8',
+    p15:  isDark ? '#f59e0b' : '#d97706',
+    p50:  isDark ? '#3ecf8e' : '#059669',
+    p85:  isDark ? '#f97316' : '#ea580c',
+    p97:  isDark ? '#a78bfa' : '#7c3aed',
+    baby: '#e8734a',
+  };
+
+  const datasets = [
+    { ...curve(1, colors.p3,  '3rd'),  borderWidth: 1.5 },
+    { ...curve(2, colors.p15, '15th'), borderWidth: 1.5 },
+    { ...curve(3, colors.p50, '50th'), borderWidth: 2 },
+    { ...curve(4, colors.p85, '85th'), borderWidth: 1.5 },
+    { ...curve(5, colors.p97, '97th'), borderWidth: 1.5 },
+    {
+      label: 'Your baby',
+      data: babyData,
+      borderColor: '#e8734a',
+      backgroundColor: '#e8734a',
+      borderWidth: 2.5,
+      pointRadius: 5,
+      pointHoverRadius: 7,
+      pointBackgroundColor: '#e8734a',
+      pointBorderColor: '#fff',
+      pointBorderWidth: 2,
+      tension: 0.3,
+      fill: false,
+    }
+  ];
+
+  if (chart) {
+    chart.data.datasets = datasets;
+    chart.options.scales.x.max = maxW;
+    chart.update('active');
+    return;
+  }
+
+  chart = new Chart(ctx, {
+    type: 'line',
+    data: { datasets },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      events: ['click'],
+      parsing: false,
+      animation: { duration: 300 },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: 'rgba(22,25,38,0.97)',
+          borderColor: '#252840',
+          borderWidth: 1,
+          titleFont: { family: 'DM Sans', size: 12 },
+          bodyFont: { family: 'DM Sans', size: 12 },
+          titleColor: '#e4e8f0',
+          bodyColor: '#a0a8b8',
+          padding: 10,
+          callbacks: {
+            title: items => `Age: ${items[0].parsed.x.toFixed(1)} weeks`,
+            label: item => {
+              if (item.datasetIndex === 5) {
+                return ` Your baby: ${item.parsed.y.toFixed(2)} ${state.unit === 'kg' ? 'kg' : 'lbs'}`;
+              }
+              const names = ['3rd','15th','50th','85th','97th'];
+              return ` ${names[item.datasetIndex]}p: ${item.parsed.y.toFixed(2)} ${state.unit === 'kg' ? 'kg' : 'lbs'}`;
+            },
+            filter: item => item.parsed.y > 0
+          }
+        }
+      },
+      scales: {
+        x: {
+          type: 'linear',
+          min: 0,
+          max: maxW,
+          title: { display: true, text: 'Age (weeks)', font: { family: 'DM Sans', size: 11 }, color: '#5a6070' },
+          grid: { color: 'rgba(255,255,255,0.05)' },
+          ticks: { font: { family: 'DM Sans', size: 11 }, color: '#5a6070', maxTicksLimit: 14 },
+          border: { color: '#252840' }
+        },
+        y: {
+          title: { display: true, text: yLabel, font: { family: 'DM Sans', size: 11 }, color: '#5a6070' },
+          grid: { color: 'rgba(255,255,255,0.05)' },
+          ticks: { font: { family: 'DM Sans', size: 11 }, color: '#5a6070' },
+          border: { color: '#252840' }
+        }
+      }
+    }
+  });
+}
+
+// ─── CSV EXPORT ───────────────────────────────────────────────────────────────
+function exportCSV() {
+  if (!state.measurements.length) { alert('No measurements to export.'); return; }
+  const lines = ['date,weight_kg'];
+  state.measurements.forEach(m => lines.push(`${m.date},${m.weightKg}`));
+  const blob = new Blob([lines.join('\n')], { type: 'text/csv' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'baby_weight.csv';
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+function importCSV() {
+  document.getElementById('csvFileInput').value = '';
+  document.getElementById('csvFileInput').click();
+}
+
+function handleCSVFile(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const bd = document.getElementById('birthDate').value;
+  if (!bd) { alert('Please enter your baby\'s birth date before importing.'); return; }
+
+  const reader = new FileReader();
+  reader.onload = function(ev) {
+    const lines = ev.target.result.trim().split(/\r?\n/);
+    let imported = 0, skipped = 0;
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i].trim();
+      if (!line || line.toLowerCase().startsWith('date')) continue; // skip header
+      const parts = line.split(',');
+      if (parts.length < 2) { skipped++; continue; }
+      const date = parts[0].trim();
+      const weightKg = parseFloat(parts[1]);
+      if (!date.match(/^\d{4}-\d{2}-\d{2}$/) || isNaN(weightKg) || weightKg <= 0 || weightKg > 30) { skipped++; continue; }
+      const ageWeeks = (new Date(date) - new Date(bd)) / (1000*60*60*24*7);
+      if (ageWeeks < 0 || ageWeeks > 120) { skipped++; continue; }
+      // avoid duplicates by date
+      if (!state.measurements.find(m => m.date === date)) {
+        state.measurements.push({ date, weightKg: Math.round(weightKg * 100) / 100, ageWeeks: Math.round(ageWeeks * 100) / 100 });
+        imported++;
+      } else { skipped++; }
+    }
+    state.measurements.sort((a, b) => a.ageWeeks - b.ageWeeks);
+    save();
+    renderMeasurements();
+    renderChart();
+    alert(`Import complete: ${imported} added, ${skipped} skipped.`);
+  };
+  reader.readAsText(file);
+}
+
+
+// ─── FULL JSON BACKUP / RESTORE ───────────────────────────────────────────────
+function exportBackup() {
+  const safeName = (state.name || 'baby').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'baby';
+  const payload = {
+    app: 'my-baby-weight-tracker',
+    exportedAt: new Date().toISOString(),
+    data: state
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `${safeName}-weight-backup.json`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+function importBackup() {
+  document.getElementById('backupFileInput').value = '';
+  document.getElementById('backupFileInput').click();
+}
+
+function handleBackupFile(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(ev) {
+    try {
+      const parsed = JSON.parse(ev.target.result);
+      const incoming = parsed.data || parsed;
+      if (!incoming || !Array.isArray(incoming.measurements)) throw new Error('Missing measurements array');
+      const cleaned = { ...state, ...incoming, version: 2 };
+      cleaned.measurements = cleaned.measurements
+        .filter(m => m && /^\d{4}-\d{2}-\d{2}$/.test(m.date) && Number(m.weightKg) > 0)
+        .map(m => ({ ...m, weightKg: Math.round(Number(m.weightKg) * 100) / 100 }))
+        .sort((a, b) => new Date(a.date) - new Date(b.date));
+      state = cleaned;
+      save();
+      if (state.birthDate) document.getElementById('birthDate').value = state.birthDate;
+      if (state.name) document.getElementById('babyName').value = state.name;
+      setGender(state.gender || 'boy', false);
+      setUnit(state.unit || 'kg', false);
+      renderBabyDisplay();
+      renderMeasurements();
+      renderChart();
+      alert(`Backup restored: ${state.measurements.length} measurements loaded.`);
+    } catch(err) {
+      alert('Backup file is not valid JSON for this app.');
+    }
+  };
+  reader.readAsText(file);
+}
+
+// ─── HIDE TOOLTIP ON OUTSIDE CLICK/TOUCH ─────────────────────────────────────
+document.addEventListener('click', function(e) {
+  if (!chart) return;
+  if (!document.getElementById('weightChart').contains(e.target)) {
+    chart.tooltip.setActiveElements([], {});
+    chart.update('none');
+  }
+});
+
+// Convert touch on canvas → click so Chart.js picks it up
+document.getElementById('weightChart').addEventListener('touchend', function(e) {
+  e.preventDefault();
+  const touch = e.changedTouches[0];
+  const click = new MouseEvent('click', {
+    clientX: touch.clientX,
+    clientY: touch.clientY,
+    bubbles: true,
+    cancelable: true
+  });
+  this.dispatchEvent(click);
+}, { passive: false });
+
+// Dismiss tooltip on touch outside canvas
+document.addEventListener('touchend', function(e) {
+  if (!chart) return;
+  if (!document.getElementById('weightChart').contains(e.target)) {
+    chart.tooltip.setActiveElements([], {});
+    chart.update('none');
+  }
+}, { passive: true });
+
+// ─── END ──────────────────────────────────────────────────────────────────────
+</script>
+</body>
+</html>
