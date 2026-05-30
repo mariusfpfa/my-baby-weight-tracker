@@ -13,6 +13,53 @@
 <meta name="theme-color" content="#2a7d6f">
 <link rel="apple-touch-icon" id="appIcon">
 <script>
+
+const I18N = {
+  ro: {
+    appTitle: 'Monitor greutate bebe', appSubtitle: 'Urmărește creșterea comparativ cu standardele WHO', babyInfo: 'Date bebe', name: 'Nume', namePh: 'ex. Luca', birthDate: 'Data nașterii', dateHint: 'Format: zi.lună.an — ex. 30.05.2026', datePh: 'zz.ll.aaaa', gender: 'Sex', weightUnit: 'Unitate greutate', save: 'Salvează', privateSync: 'Sincronizare privată', syncCollapsedHint: 'Închisă · fără email/parolă', usernamePh: 'username, ex. marius', devicePh: 'nume device', create: 'Creează', login: 'Login', requestAccess: 'Cere acces', syncNow: 'Sincronizează', syncTinyHint: 'Device-uri noi: cere acces, apoi aprobă de pe device-ul vechi.', syncDefault: 'Opțional: creează un username ca să sincronizezi între device-uri fără email, telefon sau parolă.', measurements: 'Măsurători', date: 'Data', weightKg: 'Greutate (kg)', pounds: 'Livre', ounces: 'Uncii', add: 'Adaugă', emptyMeasurements: 'Apasă ＋ ca să adaugi măsurători', chartBoy: 'Greutate vs percentile WHO — Băiat', chartGirl: 'Greutate vs percentile WHO — Fată', boy: 'Băiat', girl: 'Fată', baby: 'Bebe', age: 'Vârstă', weeks: 'săpt.', showLess: '▲ Arată mai puțin', showAll: n => `▼ Arată toate cele ${n} măsurători`, yourBaby: 'Bebelușul tău', whoNote: 'Sursa datelor: WHO Child Growth Standards. Graficele sunt informative; cere mereu sfatul pediatrului pentru creșterea copilului.', syncLogged: u => `Logat ca <strong>${u}</strong>. Schimbările se sincronizează automat.`, syncCreated: u => `Creat <strong>${u}</strong>. Acest device este device-ul principal.`, syncSynced: (n,u) => `Sincronizat ${n} măsurători ca <strong>${u}</strong>.`, syncCloud: u => `Sincronizat din cloud ca <strong>${u}</strong>.`, syncLoggedOut: 'Logout pe acest device. Datele locale rămân în browser.', noPending: 'Nu există cereri de device în așteptare.', approve: 'Aprobă', accessRequested: c => `Cerere trimisă. Cod: <strong>${c}</strong>. Deschide aplicația pe un device aprobat și apasă 👀 ca să aprobi.`, accessApproved: 'Acces aprobat. Noul device poate apăsa Login sau verifica statusul.', stillWaiting: s => `Încă așteaptă aprobare. Status: ${s}.`, errPrefix: '⚠️ ', alerts: { birth: 'Te rog introdu data nașterii.', birthFirst: 'Te rog introdu mai întâi data nașterii bebelușului.', measureDate: 'Te rog introdu data măsurătorii.', validWeight: 'Te rog introdu o greutate validă.', range: 'Greutatea pare în afara intervalului. Verifică valoarea.', beforeBirth: 'Data măsurătorii nu poate fi înainte de naștere.', age: 'Vârsta depășește 2 ani. Verifică datele.', noExport: 'Nu există măsurători de exportat.', saveFail: 'Nu am putut salva datele în browser. Exportă un backup.' }
+  },
+  en: {
+    appTitle: 'Baby Weight Tracker', appSubtitle: "Plot your baby's growth against WHO standards", babyInfo: 'Baby Info', name: 'Name', namePh: 'e.g. Luca', birthDate: 'Birth Date', dateHint: 'Format: day/month/year — e.g. 30.05.2026', datePh: 'dd.mm.yyyy', gender: 'Gender', weightUnit: 'Weight Unit', save: 'Save', privateSync: 'Private Sync', syncCollapsedHint: 'Collapsed · no email/password', usernamePh: 'username, e.g. marius', devicePh: 'device name', create: 'Create', login: 'Login', requestAccess: 'Request access', syncNow: 'Sync now', syncTinyHint: 'New devices: request access, then approve from the old device.', syncDefault: 'Optional: create a username to sync across devices without email, phone, or password.', measurements: 'Measurements', date: 'Date', weightKg: 'Weight (kg)', pounds: 'Pounds', ounces: 'Ounces', add: 'Add', emptyMeasurements: 'Tap ＋ above to add measurements', chartBoy: 'Weight vs WHO Percentiles — Boy', chartGirl: 'Weight vs WHO Percentiles — Girl', boy: 'Boy', girl: 'Girl', baby: 'Baby', age: 'Age', weeks: 'weeks', showLess: '▲ Show less', showAll: n => `▼ Show all ${n} measurements`, yourBaby: 'Your baby', whoNote: "Data source: WHO Child Growth Standards. These charts are for informational use only. Always consult your pediatrician for medical advice about your baby's growth.", syncLogged: u => `Logged in as <strong>${u}</strong>. Changes sync automatically.`, syncCreated: u => `Created <strong>${u}</strong>. This device is the owner device.`, syncSynced: (n,u) => `Synced ${n} measurements as <strong>${u}</strong>.`, syncCloud: u => `Synced from cloud as <strong>${u}</strong>.`, syncLoggedOut: 'Logged out on this device. Local data is still stored in this browser.', noPending: 'No pending device requests.', approve: 'Approve', accessRequested: c => `Access requested. Code: <strong>${c}</strong>. Open the app on an approved device and tap 👀 to approve.`, accessApproved: 'Device approved. The new device can now tap Login or check status.', stillWaiting: s => `Still waiting for approval. Status: ${s}.`, errPrefix: '⚠️ ', alerts: { birth: 'Please enter a birth date.', birthFirst: "Please enter your baby's birth date first.", measureDate: 'Please enter the measurement date.', validWeight: 'Please enter a valid weight.', range: 'Weight seems out of range. Please check the value.', beforeBirth: 'Measurement date cannot be before birth date.', age: 'Age exceeds 2 years. Please check dates.', noExport: 'No measurements to export.', saveFail: 'Could not save data in this browser. Please export a backup.' }
+  }
+};
+let lang = localStorage.getItem('babyTrackerLang') || 'ro';
+function tr(key, ...args) { const v = (I18N[lang] || I18N.ro)[key]; return typeof v === 'function' ? v(...args) : (v || key); }
+function applyLanguage() {
+  document.documentElement.lang = lang;
+  document.querySelectorAll('[data-i18n]').forEach(el => { el.innerHTML = tr(el.dataset.i18n); });
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(el => { el.placeholder = tr(el.dataset.i18nPlaceholder); });
+  document.getElementById('langToggle').textContent = lang.toUpperCase();
+  document.getElementById('btnBoy').textContent = `♂ ${tr('boy')}`;
+  document.getElementById('btnGirl').textContent = `♀ ${tr('girl')}`;
+  renderBabyDisplay();
+  renderMeasurements();
+  updateChartTitle();
+  updateRangeLabels();
+}
+function toggleLang() { lang = lang === 'ro' ? 'en' : 'ro'; localStorage.setItem('babyTrackerLang', lang); applyLanguage(); }
+function alertT(key) { alert(I18N[lang].alerts[key]); }
+
+function formatDateForInput(iso) {
+  if (!iso) return '';
+  const m = String(iso).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  return m ? `${m[3]}.${m[2]}.${m[1]}` : String(iso);
+}
+function dateToISO(value) {
+  const v = String(value || '').trim();
+  let m = v.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (m) return `${m[1]}-${m[2]}-${m[3]}`;
+  m = v.match(/^(\d{1,2})[./-](\d{1,2})[./-](\d{4})$/);
+  if (m) return `${m[3]}-${m[2].padStart(2, '0')}-${m[1].padStart(2, '0')}`;
+  return '';
+}
+function updateRangeLabels() {
+  const labels = lang === 'ro'
+    ? { pill13:'13 săpt.', pill26:'6 luni', pill52:'1 an', pill104:'2 ani' }
+    : { pill13:'13 weeks', pill26:'6 months', pill52:'1 year', pill104:'2 years' };
+  Object.entries(labels).forEach(([id, text]) => { const el = document.getElementById(id); if (el) el.textContent = text; });
+}
+
+
   // Generate app icon via canvas (no external image needed)
   (function() {
     const c = document.createElement('canvas');
@@ -505,11 +552,33 @@
 
 
 
-  .sync-card { margin-top: 12px; }
+  .lang-toggle {
+    height: 32px;
+    padding: 0 10px;
+    border-radius: 9px;
+    border: 1.5px solid var(--border);
+    background: var(--card2);
+    color: var(--text);
+    font-family: inherit;
+    font-size: 0.75rem;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .field-hint { color: var(--text-muted); font-size: 0.72rem; margin-top: -8px; margin-bottom: 12px; }
+  .sync-card { margin-top: 0; }
+  .sync-card.collapsed .sync-body { display: none; }
+  .sync-title-wrap { display:flex; flex-direction:column; gap:2px; min-width:0; }
+  .sync-subtitle { color: var(--text-muted); font-size: 0.72rem; font-weight: 500; text-transform:none; letter-spacing:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:230px; }
+  .sync-chevron { transition: transform 0.15s; }
+  .sync-card:not(.collapsed) .sync-chevron { transform: rotate(180deg); }
   .sync-row { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
-  .sync-row input { flex:1; min-width: 160px; }
+  .sync-row input { flex:1; min-width: 130px; }
+  .sync-actions { display:grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap:8px; margin-top:8px; }
+  .sync-actions .btn-primary { padding: 9px 8px; font-size:0.78rem; }
+  .sync-mini-actions { display:flex; justify-content:space-between; align-items:center; gap:8px; margin-top:8px; }
   .sync-status { color: var(--text-muted); font-size: 0.78rem; line-height: 1.35; margin-top: 8px; }
   .sync-status strong { color: var(--accent); }
+  @media (min-width: 640px) { .sync-actions { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
 </style>
 </head>
 <body>
@@ -517,9 +586,10 @@
 <header>
   <div class="logo">🍼</div>
   <div style="flex:1;">
-    <h1>Baby Weight Tracker</h1>
-    <p>Plot your baby's growth against WHO standards</p>
+    <h1 data-i18n="appTitle">Monitor greutate bebe</h1>
+    <p data-i18n="appSubtitle">Urmărește creșterea comparativ cu standardele WHO</p>
   </div>
+  <button class="lang-toggle" id="langToggle" onclick="toggleLang()" title="Language">RO</button>
   <button id="themeToggle" onclick="toggleTheme()" title="Toggle theme" style="
     width:38px;height:38px;border-radius:10px;border:1.5px solid var(--border);
     background:var(--card2);cursor:pointer;font-size:18px;
@@ -537,7 +607,7 @@
       <div class="card-header" style="justify-content:space-between;">
         <div style="display:flex;align-items:center;gap:10px;">
           <div class="card-icon">👶</div>
-          <h2>Baby Info</h2>
+          <h2 data-i18n="babyInfo">Date bebe</h2>
         </div>
         <button class="icon-btn" id="editBabyBtn" onclick="toggleBabyEdit()" title="Edit">✏️</button>
       </div>
@@ -553,53 +623,60 @@
 
       <!-- Edit mode -->
       <div id="babyEditForm" class="card-body">
-        <label>Name</label>
-        <input type="text" id="babyName" placeholder="e.g. Luca" style="margin-bottom:14px;">
+        <label data-i18n="name">Nume</label>
+        <input type="text" id="babyName" data-i18n-placeholder="namePh" placeholder="ex. Luca" style="margin-bottom:14px;">
 
-        <label>Birth Date</label>
-        <input type="date" id="birthDate" max="">
+        <label data-i18n="birthDate">Data nașterii</label>
+        <input type="text" id="birthDate" inputmode="numeric" data-i18n-placeholder="datePh" placeholder="zz.ll.aaaa" aria-describedby="birthDateHint"><div class="field-hint" id="birthDateHint" data-i18n="dateHint">Format: zi.lună.an — ex. 30.05.2026</div>
 
-        <label>Gender</label>
+        <label data-i18n="gender">Sex</label>
         <div class="gender-row">
-          <button class="gender-btn active-boy" id="btnBoy" onclick="setGender('boy')">♂ Boy</button>
-          <button class="gender-btn" id="btnGirl" onclick="setGender('girl')">♀ Girl</button>
+          <button class="gender-btn active-boy" id="btnBoy" onclick="setGender('boy')">♂ Băiat</button>
+          <button class="gender-btn" id="btnGirl" onclick="setGender('girl')">♀ Fată</button>
         </div>
 
-        <label>Weight Unit</label>
+        <label data-i18n="weightUnit">Unitate greutate</label>
         <div class="unit-row">
           <button class="unit-btn active" id="unitKg" onclick="setUnit('kg')">kg</button>
           <button class="unit-btn" id="unitLbs" onclick="setUnit('lbs')">lbs / oz</button>
         </div>
 
-        <button class="btn-primary" onclick="saveBabyInfo()">Save</button>
+        <button class="btn-primary" onclick="saveBabyInfo()" data-i18n="save">Salvează</button>
       </div>
     </div>
 
     <!-- Sync / Account Card -->
-    <div class="card sync-card">
-      <div class="card-header" style="justify-content:space-between;">
-        <div style="display:flex;align-items:center;gap:10px;">
+    <div class="card sync-card collapsed" id="syncCard">
+      <button class="card-header" onclick="toggleSyncPanel()" style="justify-content:space-between;width:100%;border:0;background:none;color:inherit;cursor:pointer;text-align:left;">
+        <div style="display:flex;align-items:center;gap:10px;min-width:0;">
           <div class="card-icon">🔐</div>
-          <h2>Private Sync</h2>
+          <div class="sync-title-wrap">
+            <h2 data-i18n="privateSync">Sincronizare privată</h2>
+            <span class="sync-subtitle" id="syncSummary" data-i18n="syncCollapsedHint">Închisă · fără email/parolă</span>
+          </div>
         </div>
-      </div>
-      <div class="card-body" style="padding-top:0;">
+        <span class="sync-chevron">⌄</span>
+      </button>
+      <div class="card-body sync-body" style="padding-top:0;">
         <div class="sync-row">
-          <input type="text" id="syncUsername" placeholder="username, e.g. marius" autocomplete="username" autocapitalize="none">
-          <input type="text" id="deviceName" placeholder="device name" autocomplete="off">
+          <input type="text" id="syncUsername" data-i18n-placeholder="usernamePh" placeholder="username, ex. marius" autocomplete="username" autocapitalize="none">
+          <input type="text" id="deviceName" data-i18n-placeholder="devicePh" placeholder="nume device" autocomplete="off">
         </div>
-        <div class="sync-row" style="margin-top:8px;">
-          <button class="btn-primary" onclick="createAccount()">Create</button>
-          <button class="btn-primary" onclick="loginDevice()">Login</button>
-          <button class="btn-primary" onclick="requestDeviceAccess()">Request access</button>
-          <button class="btn-primary" onclick="syncNow()">Sync now</button>
+        <div class="sync-actions">
+          <button class="btn-primary" onclick="createAccount()" data-i18n="create">Creează</button>
+          <button class="btn-primary" onclick="loginDevice()" data-i18n="login">Login</button>
+          <button class="btn-primary" onclick="requestDeviceAccess()" data-i18n="requestAccess">Cere acces</button>
+          <button class="btn-primary" onclick="syncNow()" data-i18n="syncNow">Sincronizează</button>
         </div>
-        <div class="sync-row" style="margin-top:8px;">
-          <button class="icon-btn" onclick="loadPendingRequests()" title="Pending devices">👀</button>
-          <button class="icon-btn" onclick="logoutSync()" title="Logout this device">🚪</button>
+        <div class="sync-mini-actions">
+          <span class="sync-status" style="margin-top:0;" data-i18n="syncTinyHint">Device-uri noi: cere acces, apoi aprobă de pe device-ul vechi.</span>
+          <div style="display:flex;gap:6px;flex-shrink:0;">
+            <button class="icon-btn" onclick="loadPendingRequests()" title="Pending devices">👀</button>
+            <button class="icon-btn" onclick="logoutSync()" title="Logout this device">🚪</button>
+          </div>
         </div>
         <div id="pendingRequests" class="sync-status"></div>
-        <div id="syncStatus" class="sync-status">Optional: create a username to sync across devices without email, phone, or password.</div>
+        <div id="syncStatus" class="sync-status" data-i18n="syncDefault">Opțional: creează un username ca să sincronizezi între device-uri fără email, telefon sau parolă.</div>
       </div>
     </div>
 
@@ -608,7 +685,7 @@
       <div class="card-header" style="justify-content:space-between;">
         <div style="display:flex;align-items:center;gap:10px;">
           <div class="card-icon">📋</div>
-          <h2>Measurements</h2>
+          <h2 data-i18n="measurements">Măsurători</h2>
         </div>
         <div style="display:flex;gap:6px;align-items:center;">
           <button class="icon-btn" onclick="importCSV()" title="Import CSV measurements">📥</button>
@@ -627,27 +704,27 @@
         <div class="add-form-wrap">
           <div class="add-form-row">
             <div>
-              <label>Date</label>
-              <input type="date" id="measureDate">
+              <label data-i18n="date">Data</label>
+              <input type="text" id="measureDate" inputmode="numeric" data-i18n-placeholder="datePh" placeholder="zz.ll.aaaa">
             </div>
             <div id="kgInput">
-              <label>Weight (kg)</label>
+              <label data-i18n="weightKg">Greutate (kg)</label>
               <input type="number" id="weightKg" step="0.01" min="0" max="30" placeholder="e.g. 5.47">
             </div>
           </div>
           <div id="lbsInput" style="display:none;">
             <div class="add-form-row">
               <div>
-                <label>Pounds</label>
+                <label data-i18n="pounds">Livre</label>
                 <input type="number" id="weightLbs" step="1" min="0" max="60" placeholder="e.g. 12">
               </div>
               <div>
-                <label>Ounces</label>
+                <label data-i18n="ounces">Uncii</label>
                 <input type="number" id="weightOz" step="0.1" min="0" max="15.9" placeholder="e.g. 1">
               </div>
             </div>
           </div>
-          <button class="btn-primary" onclick="addMeasurement()">Add</button>
+          <button class="btn-primary" onclick="addMeasurement()" data-i18n="add">Adaugă</button>
         </div>
       </div>
 
@@ -656,7 +733,7 @@
         <div id="measurementsList">
           <div class="empty-state">
             <span class="emoji">📊</span>
-            Tap ＋ above to add measurements
+            <span data-i18n="emptyMeasurements">Apasă ＋ ca să adaugi măsurători</span>
           </div>
         </div>
       </div>
@@ -669,14 +746,14 @@
     <div class="card">
       <div class="card-header">
         <div class="card-icon">📈</div>
-        <h2 id="chartTitle">Weight vs WHO Percentiles — Boy</h2>
+        <h2 id="chartTitle">Greutate vs percentile WHO — Băiat</h2>
       </div>
 
       <div class="range-pills">
-        <button class="range-pill active" onclick="setRange(13)" id="pill13">13 weeks</button>
-        <button class="range-pill" onclick="setRange(26)" id="pill26">6 months</button>
-        <button class="range-pill" onclick="setRange(52)" id="pill52">1 year</button>
-        <button class="range-pill" onclick="setRange(104)" id="pill104">2 years</button>
+        <button class="range-pill active" onclick="setRange(13)" id="pill13">13 săpt.</button>
+        <button class="range-pill" onclick="setRange(26)" id="pill26">6 luni</button>
+        <button class="range-pill" onclick="setRange(52)" id="pill52">1 an</button>
+        <button class="range-pill" onclick="setRange(104)" id="pill104">2 ani</button>
       </div>
 
       <div class="chart-wrapper">
@@ -714,8 +791,7 @@
 
       <div style="padding:0 20px 18px;">
         <p style="font-size:0.72rem;color:var(--text-muted);opacity:0.7;line-height:1.6;">
-          Data source: WHO Child Growth Standards. These charts are for informational use only.
-          Always consult your pediatrician for medical advice about your baby's growth.
+          <span data-i18n="whoNote">Sursa datelor: WHO Child Growth Standards. Graficele sunt informative; cere mereu sfatul pediatrului pentru creșterea copilului.</span>
         </p>
       </div>
     </div>
@@ -843,7 +919,7 @@ function save() {
     queueSync();
   } catch(e) {
     console.error('Could not persist baby tracker data', e);
-    alert('Could not save data in this browser. Please export a backup.');
+    alertT('saveFail');
   }
 }
 
@@ -854,11 +930,9 @@ window.addEventListener('DOMContentLoaded', () => {
   applyTheme(savedTheme);
 
   const today = new Date().toISOString().split('T')[0];
-  document.getElementById('birthDate').max = today;
-  document.getElementById('measureDate').max = today;
-  document.getElementById('measureDate').value = today;
+  document.getElementById('measureDate').value = formatDateForInput(today);
 
-  if (state.birthDate) document.getElementById('birthDate').value = state.birthDate;
+  if (state.birthDate) document.getElementById('birthDate').value = formatDateForInput(state.birthDate);
   if (state.name) document.getElementById('babyName').value = state.name;
   setGender(state.gender, false);
   setUnit(state.unit, false);
@@ -878,7 +952,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
 // ─── BABY INFO DISPLAY ────────────────────────────────────────────────────────
 function renderBabyDisplay() {
-  const name = state.name || 'Baby';
+  const name = state.name || tr('baby');
   const bd = state.birthDate;
   const gender = state.gender;
   const unit = state.unit;
@@ -914,14 +988,14 @@ function toggleBabyEdit() {
     display.style.display = 'none';
     form.style.display = 'block';
     document.getElementById('babyName').value = state.name || '';
-    document.getElementById('birthDate').value = state.birthDate || '';
+    document.getElementById('birthDate').value = formatDateForInput(state.birthDate);
   }
 }
 
 function saveBabyInfo() {
   const name = document.getElementById('babyName').value.trim();
-  const bd = document.getElementById('birthDate').value;
-  if (!bd) { alert('Please enter a birth date.'); return; }
+  const bd = dateToISO(document.getElementById('birthDate').value);
+  if (!bd) { alertT('birth'); return; }
 
   const prevBd = state.birthDate;
   state.name = name;
@@ -950,13 +1024,17 @@ function toggleAddForm() {
   btn.classList.toggle('active', !isOpen);
 }
 
+function updateChartTitle() {
+  const el = document.getElementById('chartTitle');
+  if (el) el.textContent = state.gender === 'boy' ? tr('chartBoy') : tr('chartGirl');
+}
+
 // ─── GENDER ───────────────────────────────────────────────────────────────────
 function setGender(g, doSave = true) {
   state.gender = g;
   document.getElementById('btnBoy').className = 'gender-btn' + (g === 'boy' ? ' active-boy' : '');
   document.getElementById('btnGirl').className = 'gender-btn' + (g === 'girl' ? ' active-girl' : '');
-  document.getElementById('chartTitle').textContent =
-    `Weight vs WHO Percentiles — ${g === 'boy' ? 'Boy' : 'Girl'}`;
+  updateChartTitle();
   if (doSave) { save(); renderChart(); }
 }
 
@@ -981,30 +1059,30 @@ function setRange(weeks) {
 
 // ─── ADD MEASUREMENT ──────────────────────────────────────────────────────────
 function addMeasurement() {
-  const bd = document.getElementById('birthDate').value;
-  const md = document.getElementById('measureDate').value;
-  if (!bd) { alert('Please enter your baby\'s birth date first.'); return; }
-  if (!md) { alert('Please enter the measurement date.'); return; }
+  const bd = dateToISO(document.getElementById('birthDate').value);
+  const md = dateToISO(document.getElementById('measureDate').value);
+  if (!bd) { alertT('birthFirst'); return; }
+  if (!md) { alertT('measureDate'); return; }
 
   let weightKg;
   if (state.unit === 'kg') {
     weightKg = parseFloat(document.getElementById('weightKg').value);
-    if (isNaN(weightKg) || weightKg <= 0) { alert('Please enter a valid weight.'); return; }
+    if (isNaN(weightKg) || weightKg <= 0) { alertT('validWeight'); return; }
   } else {
     const lbs = parseFloat(document.getElementById('weightLbs').value) || 0;
     const oz = parseFloat(document.getElementById('weightOz').value) || 0;
     weightKg = (lbs + oz/16) * 0.453592;
-    if (weightKg <= 0) { alert('Please enter a valid weight.'); return; }
+    if (weightKg <= 0) { alertT('validWeight'); return; }
   }
 
-  if (weightKg > 30 || weightKg < 0.5) { alert('Weight seems out of range. Please check the value.'); return; }
+  if (weightKg > 30 || weightKg < 0.5) { alertT('range'); return; }
 
   const measureMs = new Date(md).getTime();
   const birthMs = new Date(bd).getTime();
-  if (measureMs < birthMs) { alert('Measurement date cannot be before birth date.'); return; }
+  if (measureMs < birthMs) { alertT('beforeBirth'); return; }
 
   const ageWeeks = (measureMs - birthMs) / (1000 * 60 * 60 * 24 * 7);
-  if (ageWeeks > 120) { alert('Age exceeds 2 years. Please check dates.'); return; }
+  if (ageWeeks > 120) { alertT('age'); return; }
 
   state.birthDate = bd;
   state.measurements.push({ date: md, weightKg: Math.round(weightKg * 100) / 100, ageWeeks: Math.round(ageWeeks * 100) / 100 });
@@ -1066,7 +1144,7 @@ let showAllMeasurements = false;
 function renderMeasurements() {
   const el = document.getElementById('measurementsList');
   if (!state.measurements.length) {
-    el.innerHTML = `<div class="empty-state"><span class="emoji">📊</span>Tap ＋ above to add measurements</div>`;
+    el.innerHTML = `<div class="empty-state"><span class="emoji">📊</span><span data-i18n="emptyMeasurements">Apasă ＋ ca să adaugi măsurători</span></div>`;
     showAllMeasurements = false;
     return;
   }
@@ -1105,7 +1183,7 @@ function renderMeasurements() {
       color:var(--text-muted);cursor:pointer;transition:all 0.15s;
     " onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'"
        onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text-muted)'">
-      ${showAllMeasurements ? '▲ Show less' : `▼ Show all ${total} measurements`}
+      ${showAllMeasurements ? tr('showLess') : tr('showAll', total)}
     </button>` : '';
 
   el.innerHTML = items + toggleBtn;
@@ -1179,7 +1257,7 @@ function renderChart() {
     { ...curve(4, colors.p85, '85th'), borderWidth: 1.5 },
     { ...curve(5, colors.p97, '97th'), borderWidth: 1.5 },
     {
-      label: 'Your baby',
+      label: tr('yourBaby'),
       data: babyData,
       borderColor: '#e8734a',
       backgroundColor: '#e8734a',
@@ -1226,7 +1304,7 @@ function renderChart() {
             title: items => `Age: ${items[0].parsed.x.toFixed(1)} weeks`,
             label: item => {
               if (item.datasetIndex === 5) {
-                return ` Your baby: ${item.parsed.y.toFixed(2)} ${state.unit === 'kg' ? 'kg' : 'lbs'}`;
+                return ` ${tr('yourBaby')}: ${item.parsed.y.toFixed(2)} ${state.unit === 'kg' ? 'kg' : 'lbs'}`;
               }
               const names = ['3rd','15th','50th','85th','97th'];
               return ` ${names[item.datasetIndex]}p: ${item.parsed.y.toFixed(2)} ${state.unit === 'kg' ? 'kg' : 'lbs'}`;
@@ -1258,7 +1336,7 @@ function renderChart() {
 
 // ─── CSV EXPORT ───────────────────────────────────────────────────────────────
 function exportCSV() {
-  if (!state.measurements.length) { alert('No measurements to export.'); return; }
+  if (!state.measurements.length) { alertT('noExport'); return; }
   const lines = ['date,weight_kg'];
   state.measurements.forEach(m => lines.push(`${m.date},${m.weightKg}`));
   const blob = new Blob([lines.join('\n')], { type: 'text/csv' });
@@ -1277,7 +1355,7 @@ function importCSV() {
 function handleCSVFile(e) {
   const file = e.target.files[0];
   if (!file) return;
-  const bd = document.getElementById('birthDate').value;
+  const bd = dateToISO(document.getElementById('birthDate').value);
   if (!bd) { alert('Please enter your baby\'s birth date before importing.'); return; }
 
   const reader = new FileReader();
@@ -1347,7 +1425,7 @@ function handleBackupFile(e) {
         .sort((a, b) => new Date(a.date) - new Date(b.date));
       state = cleaned;
       save();
-      if (state.birthDate) document.getElementById('birthDate').value = state.birthDate;
+      if (state.birthDate) document.getElementById('birthDate').value = formatDateForInput(state.birthDate);
       if (state.name) document.getElementById('babyName').value = state.name;
       setGender(state.gender || 'boy', false);
       setUnit(state.unit || 'kg', false);
@@ -1397,9 +1475,17 @@ document.addEventListener('touchend', function(e) {
 // ─── PASSWORDLESS DEVICE SYNC ────────────────────────────────────────────────
 let syncTimer = null;
 
+function toggleSyncPanel(forceOpen) {
+  const card = document.getElementById('syncCard');
+  if (!card) return;
+  const open = forceOpen === true || (forceOpen !== false && card.classList.contains('collapsed'));
+  card.classList.toggle('collapsed', !open);
+}
 function setSyncStatus(msg) {
   const el = document.getElementById('syncStatus');
   if (el) el.innerHTML = msg;
+  const summary = document.getElementById('syncSummary');
+  if (summary) summary.innerHTML = msg.replace(/<[^>]*>/g, '').slice(0, 46) || tr('syncCollapsedHint');
 }
 
 function getSession() {
@@ -1456,7 +1542,7 @@ function initSyncUi() {
   document.getElementById('deviceName').value = localStorage.getItem('babyWeightDeviceName') || '';
   const session = getSession();
   if (session?.sessionToken) {
-    setSyncStatus(`Logged in as <strong>${session.username}</strong>. Changes sync automatically.`);
+    setSyncStatus(tr('syncLogged', session.username));
     syncFromCloud().catch(() => {});
   }
 }
@@ -1469,9 +1555,9 @@ async function createAccount() {
     const device = await getOrCreateDeviceKey();
     const result = await api('create-account', { username, deviceName, publicKey: device.publicKey });
     setSession({ username, deviceId: result.device.id, sessionToken: result.sessionToken, expiresAt: result.expiresAt });
-    setSyncStatus(`Created <strong>${username}</strong>. This device is the owner device.`);
+    setSyncStatus(tr('syncCreated', username));
     await syncNow();
-  } catch (err) { setSyncStatus(`⚠️ ${err.message}`); }
+  } catch (err) { setSyncStatus(tr('errPrefix') + err.message); }
 }
 
 async function loginDevice() {
@@ -1485,7 +1571,7 @@ async function loginDevice() {
     setSession({ username, deviceId: result.device.id, sessionToken: result.sessionToken, expiresAt: result.expiresAt });
     setSyncStatus(`Logged in as <strong>${username}</strong>.`);
     await syncFromCloud();
-  } catch (err) { setSyncStatus(`⚠️ ${err.message}`); }
+  } catch (err) { setSyncStatus(tr('errPrefix') + err.message); }
 }
 
 async function requestDeviceAccess() {
@@ -1496,8 +1582,8 @@ async function requestDeviceAccess() {
     const device = await getOrCreateDeviceKey();
     const result = await api('request-device', { username, deviceName, publicKey: device.publicKey });
     setSession({ username, pendingRequestId: result.request.id });
-    setSyncStatus(`Access requested. Code: <strong>${result.request.code}</strong>. Open the app on an approved device and tap 👀 to approve.`);
-  } catch (err) { setSyncStatus(`⚠️ ${err.message}`); }
+    setSyncStatus(tr('accessRequested', result.request.code));
+  } catch (err) { setSyncStatus(tr('errPrefix') + err.message); }
 }
 
 async function checkRequestStatus() {
@@ -1506,10 +1592,10 @@ async function checkRequestStatus() {
   const result = await api('request-status', { requestId: session.pendingRequestId });
   if (result.status === 'approved') {
     setSession({ username: session.username, deviceId: result.device.id, sessionToken: result.sessionToken, expiresAt: result.expiresAt });
-    setSyncStatus('Access approved. This device is now logged in.');
+    setSyncStatus(lang === 'ro' ? 'Acces aprobat. Acest device este acum logat.' : 'Access approved. This device is now logged in.');
     await syncFromCloud();
   } else {
-    setSyncStatus(`Still waiting for approval. Status: ${result.status}.`);
+    setSyncStatus(tr('stillWaiting', result.status));
   }
 }
 
@@ -1518,17 +1604,17 @@ async function loadPendingRequests() {
     await checkRequestStatus();
     const result = await api('pending-requests', {}, true);
     const el = document.getElementById('pendingRequests');
-    if (!result.requests.length) { el.innerHTML = 'No pending device requests.'; return; }
-    el.innerHTML = result.requests.map(r => `<div style="margin:6px 0;padding:8px;border:1px solid var(--border);border-radius:8px;">${r.device_name} · code <strong>${r.code}</strong> <button class="btn-primary" onclick="approveRequest('${r.id}')">Approve</button></div>`).join('');
-  } catch (err) { setSyncStatus(`⚠️ ${err.message}`); }
+    if (!result.requests.length) { el.innerHTML = tr('noPending'); return; }
+    el.innerHTML = result.requests.map(r => `<div style="margin:6px 0;padding:8px;border:1px solid var(--border);border-radius:8px;">${r.device_name} · code <strong>${r.code}</strong> <button class="btn-primary" onclick="approveRequest('${r.id}')">${tr('approve')}</button></div>`).join('');
+  } catch (err) { setSyncStatus(tr('errPrefix') + err.message); }
 }
 
 async function approveRequest(requestId) {
   try {
     await api('approve-request', { requestId }, true);
-    setSyncStatus('Device approved. The new device can now tap Login or check status.');
+    setSyncStatus(tr('accessApproved'));
     await loadPendingRequests();
-  } catch (err) { setSyncStatus(`⚠️ ${err.message}`); }
+  } catch (err) { setSyncStatus(tr('errPrefix') + err.message); }
 }
 
 async function syncFromCloud() {
@@ -1544,14 +1630,14 @@ async function syncFromCloud() {
     state.measurements = result.measurements.map(m => ({ date: m.measured_on, weightKg: Number(m.weight_kg), ageWeeks: Number(m.age_weeks) }));
   }
   save();
-  if (state.birthDate) document.getElementById('birthDate').value = state.birthDate;
+  if (state.birthDate) document.getElementById('birthDate').value = formatDateForInput(state.birthDate);
   if (state.name) document.getElementById('babyName').value = state.name;
   setGender(state.gender || 'boy', false);
   setUnit(state.unit || 'kg', false);
   renderBabyDisplay();
   renderMeasurements();
   renderChart();
-  setSyncStatus(`Synced from cloud as <strong>${getSession()?.username || ''}</strong>.`);
+  setSyncStatus(tr('syncCloud', getSession()?.username || ''));
 }
 
 async function syncNow() {
@@ -1559,8 +1645,8 @@ async function syncNow() {
     const session = getSession();
     if (!session?.sessionToken) throw new Error('Create or login first.');
     await api('sync-put', { profile: state, measurements: state.measurements }, true);
-    setSyncStatus(`Synced ${state.measurements.length} measurements as <strong>${session.username}</strong>.`);
-  } catch (err) { setSyncStatus(`⚠️ ${err.message}`); }
+    setSyncStatus(tr('syncSynced', state.measurements.length, session.username));
+  } catch (err) { setSyncStatus(tr('errPrefix') + err.message); }
 }
 
 function queueSync() {
@@ -1573,7 +1659,7 @@ function queueSync() {
 async function logoutSync() {
   try { await api('logout', {}, true); } catch {}
   localStorage.removeItem(SYNC_SESSION_STORAGE);
-  setSyncStatus('Logged out on this device. Local data is still stored in this browser.');
+  setSyncStatus(tr('syncLoggedOut'));
 }
 
 // ─── END ──────────────────────────────────────────────────────────────────────
