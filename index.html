@@ -16,10 +16,10 @@
 
 const I18N = {
   ro: {
-    appTitle: 'Monitor greutate bebe', appSubtitle: 'Urmărește creșterea comparativ cu standardele WHO', babyInfo: 'Date bebe', name: 'Nume', namePh: 'ex. Luca', birthDate: 'Data nașterii', dateHint: 'Format: zi.lună.an — ex. 30.05.2026', datePh: 'zz.ll.aaaa', gender: 'Sex', weightUnit: 'Unitate greutate', save: 'Salvează', privateSync: 'Sincronizare privată', syncCollapsedHint: 'Închisă · fără email/parolă', usernamePh: 'username, ex. marius', devicePh: 'nume device', create: 'Creează', login: 'Login', requestAccess: 'Cere acces', syncNow: 'Sincronizează', syncTinyHint: 'Device-uri noi: cere acces, apoi aprobă de pe device-ul vechi.', syncDefault: 'Opțional: creează un username ca să sincronizezi între device-uri fără email, telefon sau parolă.', measurements: 'Măsurători', date: 'Data', weightKg: 'Greutate (kg)', pounds: 'Livre', ounces: 'Uncii', add: 'Adaugă', emptyMeasurements: 'Apasă ＋ ca să adaugi măsurători', chartBoy: 'Greutate vs percentile WHO — Băiat', chartGirl: 'Greutate vs percentile WHO — Fată', boy: 'Băiat', girl: 'Fată', baby: 'Bebe', age: 'Vârstă', weeks: 'săpt.', showLess: '▲ Arată mai puțin', showAll: n => `▼ Arată toate cele ${n} măsurători`, yourBaby: 'Bebelușul tău', whoNote: 'Sursa datelor: WHO Child Growth Standards. Graficele sunt informative; cere mereu sfatul pediatrului pentru creșterea copilului.', syncLogged: u => `Logat ca <strong>${u}</strong>. Schimbările se sincronizează automat.`, syncCreated: u => `Creat <strong>${u}</strong>. Acest device este device-ul principal.`, syncSynced: (n,u) => `Sincronizat ${n} măsurători ca <strong>${u}</strong>.`, syncCloud: u => `Sincronizat din cloud ca <strong>${u}</strong>.`, syncLoggedOut: 'Logout pe acest device. Datele locale rămân în browser.', noPending: 'Nu există cereri de device în așteptare.', approve: 'Aprobă', accessRequested: c => `Cerere trimisă. Cod: <strong>${c}</strong>. Deschide aplicația pe un device aprobat și apasă 👀 ca să aprobi.`, accessApproved: 'Acces aprobat. Noul device poate apăsa Login sau verifica statusul.', stillWaiting: s => `Încă așteaptă aprobare. Status: ${s}.`, errPrefix: '⚠️ ', alerts: { birth: 'Te rog introdu data nașterii.', birthFirst: 'Te rog introdu mai întâi data nașterii bebelușului.', measureDate: 'Te rog introdu data măsurătorii.', validWeight: 'Te rog introdu o greutate validă.', range: 'Greutatea pare în afara intervalului. Verifică valoarea.', beforeBirth: 'Data măsurătorii nu poate fi înainte de naștere.', age: 'Vârsta depășește 2 ani. Verifică datele.', noExport: 'Nu există măsurători de exportat.', saveFail: 'Nu am putut salva datele în browser. Exportă un backup.' }
+    appTitle: 'Monitor greutate bebe', appSubtitle: 'Urmărește creșterea comparativ cu standardele WHO', babyInfo: 'Date bebe', name: 'Nume', namePh: 'ex. Luca', birthDate: 'Data nașterii', dateHint: 'Alege data din calendar', datePh: 'zz.ll.aaaa', gender: 'Sex', weightUnit: 'Unitate greutate', save: 'Salvează', privateSync: 'Sincronizare privată', syncCollapsedHint: 'Închisă · fără email/parolă', usernamePh: 'username, ex. marius', devicePh: 'nume device', create: 'Creează', login: 'Login', requestAccess: 'Cere acces', syncNow: 'Sincronizează', syncTinyHint: 'Device-uri noi: cere acces, apoi aprobă de pe device-ul vechi.', syncDefault: 'Opțional: creează un username ca să sincronizezi între device-uri fără email, telefon sau parolă.', measurements: 'Măsurători', date: 'Data', weightKg: 'Greutate (kg)', pounds: 'Livre', ounces: 'Uncii', add: 'Adaugă', emptyMeasurements: 'Apasă ＋ ca să adaugi măsurători', chartBoy: 'Greutate vs percentile WHO — Băiat', chartGirl: 'Greutate vs percentile WHO — Fată', boy: 'Băiat', girl: 'Fată', baby: 'Bebe', age: 'Vârstă', weeks: 'săpt.', showLess: '▲ Arată mai puțin', showAll: n => `▼ Arată toate cele ${n} măsurători`, yourBaby: 'Bebelușul tău', whoNote: 'Sursa datelor: WHO Child Growth Standards. Graficele sunt informative; cere mereu sfatul pediatrului pentru creșterea copilului.', syncLogged: u => `Logat ca <strong>${u}</strong>. Schimbările se sincronizează automat.`, syncCreated: u => `Creat <strong>${u}</strong>. Acest device este device-ul principal.`, syncSynced: (n,u) => `Sincronizat ${n} măsurători ca <strong>${u}</strong>.`, syncCloud: u => `Sincronizat din cloud ca <strong>${u}</strong>.`, syncLoggedOut: 'Logout pe acest device. Datele locale rămân în browser.', noPending: 'Nu există cereri de device în așteptare.', approve: 'Aprobă', accessRequested: c => `Cerere trimisă. Cod: <strong>${c}</strong>. Deschide aplicația pe un device aprobat și apasă 👀 ca să aprobi.`, accessApproved: 'Acces aprobat. Noul device poate apăsa Login sau verifica statusul.', stillWaiting: s => `Încă așteaptă aprobare. Status: ${s}.`, errPrefix: '⚠️ ', alerts: { birth: 'Te rog introdu data nașterii.', birthFirst: 'Te rog introdu mai întâi data nașterii bebelușului.', measureDate: 'Te rog introdu data măsurătorii.', validWeight: 'Te rog introdu o greutate validă.', range: 'Greutatea pare în afara intervalului. Verifică valoarea.', beforeBirth: 'Data măsurătorii nu poate fi înainte de naștere.', age: 'Vârsta depășește 2 ani. Verifică datele.', noExport: 'Nu există măsurători de exportat.', saveFail: 'Nu am putut salva datele în browser. Exportă un backup.' }
   },
   en: {
-    appTitle: 'Baby Weight Tracker', appSubtitle: "Plot your baby's growth against WHO standards", babyInfo: 'Baby Info', name: 'Name', namePh: 'e.g. Luca', birthDate: 'Birth Date', dateHint: 'Format: day/month/year — e.g. 30.05.2026', datePh: 'dd.mm.yyyy', gender: 'Gender', weightUnit: 'Weight Unit', save: 'Save', privateSync: 'Private Sync', syncCollapsedHint: 'Collapsed · no email/password', usernamePh: 'username, e.g. marius', devicePh: 'device name', create: 'Create', login: 'Login', requestAccess: 'Request access', syncNow: 'Sync now', syncTinyHint: 'New devices: request access, then approve from the old device.', syncDefault: 'Optional: create a username to sync across devices without email, phone, or password.', measurements: 'Measurements', date: 'Date', weightKg: 'Weight (kg)', pounds: 'Pounds', ounces: 'Ounces', add: 'Add', emptyMeasurements: 'Tap ＋ above to add measurements', chartBoy: 'Weight vs WHO Percentiles — Boy', chartGirl: 'Weight vs WHO Percentiles — Girl', boy: 'Boy', girl: 'Girl', baby: 'Baby', age: 'Age', weeks: 'weeks', showLess: '▲ Show less', showAll: n => `▼ Show all ${n} measurements`, yourBaby: 'Your baby', whoNote: "Data source: WHO Child Growth Standards. These charts are for informational use only. Always consult your pediatrician for medical advice about your baby's growth.", syncLogged: u => `Logged in as <strong>${u}</strong>. Changes sync automatically.`, syncCreated: u => `Created <strong>${u}</strong>. This device is the owner device.`, syncSynced: (n,u) => `Synced ${n} measurements as <strong>${u}</strong>.`, syncCloud: u => `Synced from cloud as <strong>${u}</strong>.`, syncLoggedOut: 'Logged out on this device. Local data is still stored in this browser.', noPending: 'No pending device requests.', approve: 'Approve', accessRequested: c => `Access requested. Code: <strong>${c}</strong>. Open the app on an approved device and tap 👀 to approve.`, accessApproved: 'Device approved. The new device can now tap Login or check status.', stillWaiting: s => `Still waiting for approval. Status: ${s}.`, errPrefix: '⚠️ ', alerts: { birth: 'Please enter a birth date.', birthFirst: "Please enter your baby's birth date first.", measureDate: 'Please enter the measurement date.', validWeight: 'Please enter a valid weight.', range: 'Weight seems out of range. Please check the value.', beforeBirth: 'Measurement date cannot be before birth date.', age: 'Age exceeds 2 years. Please check dates.', noExport: 'No measurements to export.', saveFail: 'Could not save data in this browser. Please export a backup.' }
+    appTitle: 'Baby Weight Tracker', appSubtitle: "Plot your baby's growth against WHO standards", babyInfo: 'Baby Info', name: 'Name', namePh: 'e.g. Luca', birthDate: 'Birth Date', dateHint: 'Choose the date from the calendar', datePh: 'dd.mm.yyyy', gender: 'Gender', weightUnit: 'Weight Unit', save: 'Save', privateSync: 'Private Sync', syncCollapsedHint: 'Collapsed · no email/password', usernamePh: 'username, e.g. marius', devicePh: 'device name', create: 'Create', login: 'Login', requestAccess: 'Request access', syncNow: 'Sync now', syncTinyHint: 'New devices: request access, then approve from the old device.', syncDefault: 'Optional: create a username to sync across devices without email, phone, or password.', measurements: 'Measurements', date: 'Date', weightKg: 'Weight (kg)', pounds: 'Pounds', ounces: 'Ounces', add: 'Add', emptyMeasurements: 'Tap ＋ above to add measurements', chartBoy: 'Weight vs WHO Percentiles — Boy', chartGirl: 'Weight vs WHO Percentiles — Girl', boy: 'Boy', girl: 'Girl', baby: 'Baby', age: 'Age', weeks: 'weeks', showLess: '▲ Show less', showAll: n => `▼ Show all ${n} measurements`, yourBaby: 'Your baby', whoNote: "Data source: WHO Child Growth Standards. These charts are for informational use only. Always consult your pediatrician for medical advice about your baby's growth.", syncLogged: u => `Logged in as <strong>${u}</strong>. Changes sync automatically.`, syncCreated: u => `Created <strong>${u}</strong>. This device is the owner device.`, syncSynced: (n,u) => `Synced ${n} measurements as <strong>${u}</strong>.`, syncCloud: u => `Synced from cloud as <strong>${u}</strong>.`, syncLoggedOut: 'Logged out on this device. Local data is still stored in this browser.', noPending: 'No pending device requests.', approve: 'Approve', accessRequested: c => `Access requested. Code: <strong>${c}</strong>. Open the app on an approved device and tap 👀 to approve.`, accessApproved: 'Device approved. The new device can now tap Login or check status.', stillWaiting: s => `Still waiting for approval. Status: ${s}.`, errPrefix: '⚠️ ', alerts: { birth: 'Please enter a birth date.', birthFirst: "Please enter your baby's birth date first.", measureDate: 'Please enter the measurement date.', validWeight: 'Please enter a valid weight.', range: 'Weight seems out of range. Please check the value.', beforeBirth: 'Measurement date cannot be before birth date.', age: 'Age exceeds 2 years. Please check dates.', noExport: 'No measurements to export.', saveFail: 'Could not save data in this browser. Please export a backup.' }
   }
 };
 let lang = localStorage.getItem('babyTrackerLang') || 'ro';
@@ -35,6 +35,7 @@ function applyLanguage() {
   renderMeasurements();
   updateChartTitle();
   updateRangeLabels();
+  if (document.getElementById('calendarBackdrop')?.classList.contains('open')) renderCalendar();
 }
 function toggleLang() { lang = lang === 'ro' ? 'en' : 'ro'; localStorage.setItem('babyTrackerLang', lang); applyLanguage(); }
 function alertT(key) { alert(I18N[lang].alerts[key]); }
@@ -52,6 +53,71 @@ function dateToISO(value) {
   if (m) return `${m[3]}-${m[2].padStart(2, '0')}-${m[1].padStart(2, '0')}`;
   return '';
 }
+const MONTHS = {
+  ro: ['ianuarie','februarie','martie','aprilie','mai','iunie','iulie','august','septembrie','octombrie','noiembrie','decembrie'],
+  en: ['January','February','March','April','May','June','July','August','September','October','November','December']
+};
+const WEEKDAYS = {
+  ro: ['Lu','Ma','Mi','Jo','Vi','Sâ','Du'],
+  en: ['Mo','Tu','We','Th','Fr','Sa','Su']
+};
+let calendarTargetId = null;
+let calendarView = new Date();
+function isoFromDateParts(year, monthIndex, day) {
+  return `${year}-${String(monthIndex + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+}
+function parseISODate(iso) {
+  const m = String(iso || '').match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  return m ? new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3])) : null;
+}
+function openCalendar(targetId) {
+  calendarTargetId = targetId;
+  const currentIso = dateToISO(document.getElementById(targetId).value) || (targetId === 'birthDate' ? state.birthDate : '');
+  calendarView = parseISODate(currentIso) || new Date();
+  document.getElementById('calendarBackdrop').classList.add('open');
+  renderCalendar();
+}
+function closeCalendar(event) {
+  if (event && event.target && event.target.id !== 'calendarBackdrop') return;
+  document.getElementById('calendarBackdrop').classList.remove('open');
+  calendarTargetId = null;
+}
+function shiftCalendarMonth(delta) {
+  calendarView = new Date(calendarView.getFullYear(), calendarView.getMonth() + delta, 1);
+  renderCalendar();
+}
+function selectCalendarDate(iso) {
+  if (!calendarTargetId) return;
+  document.getElementById(calendarTargetId).value = formatDateForInput(iso);
+  closeCalendar();
+}
+function pickToday() {
+  const now = new Date();
+  selectCalendarDate(isoFromDateParts(now.getFullYear(), now.getMonth(), now.getDate()));
+}
+function renderCalendar() {
+  const title = document.getElementById('calendarTitle');
+  const grid = document.getElementById('calendarGrid');
+  if (!title || !grid) return;
+  const y = calendarView.getFullYear();
+  const m = calendarView.getMonth();
+  title.textContent = `${MONTHS[lang][m]} ${y}`;
+  const selectedIso = calendarTargetId ? dateToISO(document.getElementById(calendarTargetId).value) : '';
+  const today = new Date();
+  const todayIso = isoFromDateParts(today.getFullYear(), today.getMonth(), today.getDate());
+  const first = new Date(y, m, 1);
+  const daysInMonth = new Date(y, m + 1, 0).getDate();
+  const leading = (first.getDay() + 6) % 7;
+  let html = WEEKDAYS[lang].map(d => `<div class="calendar-weekday">${d}</div>`).join('');
+  for (let i = 0; i < leading; i++) html += '<button type="button" class="calendar-day muted" tabindex="-1"></button>';
+  for (let d = 1; d <= daysInMonth; d++) {
+    const iso = isoFromDateParts(y, m, d);
+    const cls = ['calendar-day', iso === selectedIso ? 'selected' : '', iso === todayIso ? 'today' : ''].filter(Boolean).join(' ');
+    html += `<button type="button" class="${cls}" onclick="selectCalendarDate('${iso}')">${d}</button>`;
+  }
+  grid.innerHTML = html;
+}
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeCalendar(); });
 function updateRangeLabels() {
   const labels = lang === 'ro'
     ? { pill13:'13 săpt.', pill26:'6 luni', pill52:'1 an', pill104:'2 ani' }
@@ -565,6 +631,30 @@ function updateRangeLabels() {
     cursor: pointer;
   }
   .field-hint { color: var(--text-muted); font-size: 0.72rem; margin-top: -8px; margin-bottom: 12px; }
+  .date-picker-wrap { display:flex; gap:8px; align-items:stretch; margin-bottom:14px; }
+  .date-picker-wrap input { margin-bottom:0; cursor:pointer; }
+  .date-picker-button {
+    width:48px; flex:0 0 48px; border:1.5px solid var(--border); border-radius:9px;
+    background:var(--card2); color:var(--text); font-size:1rem; cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .date-picker-button:focus { outline:none; border-color:var(--accent); box-shadow:0 0 0 3px rgba(62,207,142,0.12); }
+  .calendar-backdrop { position:fixed; inset:0; background:rgba(0,0,0,0.58); display:none; align-items:flex-end; justify-content:center; z-index:50; padding:16px; }
+  .calendar-backdrop.open { display:flex; }
+  .calendar-dialog { width:min(420px, 100%); background:var(--card); border:1px solid var(--border); border-radius:18px; box-shadow:0 24px 80px rgba(0,0,0,0.55); overflow:hidden; }
+  .calendar-top { display:flex; justify-content:space-between; align-items:center; gap:8px; padding:14px; border-bottom:1px solid var(--border); }
+  .calendar-title { font-weight:700; color:var(--text); text-transform:capitalize; }
+  .calendar-nav { display:flex; gap:6px; }
+  .calendar-grid { display:grid; grid-template-columns:repeat(7, 1fr); gap:4px; padding:12px 14px 14px; }
+  .calendar-weekday { color:var(--text-muted); font-size:0.72rem; text-align:center; font-weight:700; padding:4px 0; text-transform:uppercase; }
+  .calendar-day { min-height:42px; border:1px solid transparent; border-radius:10px; background:transparent; color:var(--text); font:inherit; cursor:pointer; }
+  .calendar-day:hover, .calendar-day:focus { border-color:var(--accent); outline:none; }
+  .calendar-day.muted { color:var(--text-muted); opacity:0.35; cursor:default; }
+  .calendar-day.selected { background:var(--accent); color:#07110c; font-weight:800; }
+  .calendar-day.today:not(.selected) { border-color:rgba(62,207,142,0.55); }
+  .calendar-footer { display:flex; gap:8px; padding:0 14px 14px; }
+  .calendar-footer button { flex:1; }
+  @media (min-width: 700px) { .calendar-backdrop { align-items:center; } }
   .sync-card { margin-top: 0; }
   .sync-card.collapsed .sync-body { display: none; }
   .sync-title-wrap { display:flex; flex-direction:column; gap:2px; min-width:0; }
@@ -627,7 +717,11 @@ function updateRangeLabels() {
         <input type="text" id="babyName" data-i18n-placeholder="namePh" placeholder="ex. Luca" style="margin-bottom:14px;">
 
         <label data-i18n="birthDate">Data nașterii</label>
-        <input type="text" id="birthDate" inputmode="numeric" data-i18n-placeholder="datePh" placeholder="zz.ll.aaaa" aria-describedby="birthDateHint"><div class="field-hint" id="birthDateHint" data-i18n="dateHint">Format: zi.lună.an — ex. 30.05.2026</div>
+        <div class="date-picker-wrap">
+          <input type="text" id="birthDate" readonly inputmode="none" data-i18n-placeholder="datePh" placeholder="zz.ll.aaaa" aria-describedby="birthDateHint" onclick="openCalendar('birthDate')" onfocus="openCalendar('birthDate')">
+          <button type="button" class="date-picker-button" onclick="openCalendar('birthDate')" aria-label="Calendar">📅</button>
+        </div>
+        <div class="field-hint" id="birthDateHint" data-i18n="dateHint">Format: zi.lună.an — ex. 30.05.2026</div>
 
         <label data-i18n="gender">Sex</label>
         <div class="gender-row">
@@ -705,7 +799,10 @@ function updateRangeLabels() {
           <div class="add-form-row">
             <div>
               <label data-i18n="date">Data</label>
-              <input type="text" id="measureDate" inputmode="numeric" data-i18n-placeholder="datePh" placeholder="zz.ll.aaaa">
+              <div class="date-picker-wrap">
+                <input type="text" id="measureDate" readonly inputmode="none" data-i18n-placeholder="datePh" placeholder="zz.ll.aaaa" onclick="openCalendar('measureDate')" onfocus="openCalendar('measureDate')">
+                <button type="button" class="date-picker-button" onclick="openCalendar('measureDate')" aria-label="Calendar">📅</button>
+              </div>
             </div>
             <div id="kgInput">
               <label data-i18n="weightKg">Greutate (kg)</label>
@@ -794,6 +891,23 @@ function updateRangeLabels() {
           <span data-i18n="whoNote">Sursa datelor: WHO Child Growth Standards. Graficele sunt informative; cere mereu sfatul pediatrului pentru creșterea copilului.</span>
         </p>
       </div>
+    </div>
+  </div>
+</div>
+
+<div class="calendar-backdrop" id="calendarBackdrop" onclick="closeCalendar(event)">
+  <div class="calendar-dialog" role="dialog" aria-modal="true" aria-label="Calendar" onclick="event.stopPropagation()">
+    <div class="calendar-top">
+      <button type="button" class="icon-btn" onclick="shiftCalendarMonth(-1)" aria-label="Previous month">‹</button>
+      <div class="calendar-title" id="calendarTitle">—</div>
+      <div class="calendar-nav">
+        <button type="button" class="icon-btn" onclick="shiftCalendarMonth(1)" aria-label="Next month">›</button>
+        <button type="button" class="icon-btn" onclick="closeCalendar()" aria-label="Close">×</button>
+      </div>
+    </div>
+    <div class="calendar-grid" id="calendarGrid"></div>
+    <div class="calendar-footer">
+      <button type="button" class="btn-primary" onclick="pickToday()">Azi / Today</button>
     </div>
   </div>
 </div>
