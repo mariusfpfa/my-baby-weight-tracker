@@ -945,6 +945,7 @@ window.addEventListener('DOMContentLoaded', () => {
     document.getElementById('babyEditForm').style.display = 'block';
   }
 
+  applyLanguage();
   renderMeasurements();
   initSyncUi();
   renderChart();
@@ -962,9 +963,9 @@ function renderBabyDisplay() {
   let meta = '';
   if (bd) {
     const d = new Date(bd);
-    meta += `Born ${d.getDate().toString().padStart(2,'0')}.${(d.getMonth()+1).toString().padStart(2,'0')}.${d.getFullYear()}`;
+    meta += `${lang === 'ro' ? 'Născut' : 'Born'} ${d.getDate().toString().padStart(2,'0')}.${(d.getMonth()+1).toString().padStart(2,'0')}.${d.getFullYear()}`;
   }
-  meta += ` · ${gender === 'boy' ? '♂ Boy' : '♀ Girl'} · ${unit}`;
+  meta += ` · ${gender === 'boy' ? '♂ ' + tr('boy') : '♀ ' + tr('girl')} · ${unit}`;
   document.getElementById('displayMeta').textContent = meta;
 
   const avatar = document.getElementById('babyAvatar');
@@ -1164,8 +1165,8 @@ function renderMeasurements() {
     return `
       <div class="measurement-item">
         <div>
-          <div style="font-weight:500">${m.date}</div>
-          <div class="age-badge">Age: ${weeks} weeks</div>
+          <div style="font-weight:500">${formatDateForInput(m.date)}</div>
+          <div class="age-badge">${tr('age')}: ${weeks} ${tr('weeks')}</div>
         </div>
         <div style="display:flex;align-items:center;gap:6px">
           <span class="weight-val">${disp}</span>
