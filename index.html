@@ -171,6 +171,10 @@ function updateRangeLabels() {
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   html, body { overflow-x: hidden; }
+  body, header, .main, .card, .card-header, .card-body, button, input, select, canvas {
+    max-width: 100%;
+  }
+  button, input, select { min-width: 0; }
 
   :root {
     --bg: #0d0f17;
@@ -530,10 +534,10 @@ function updateRangeLabels() {
     border: 2px solid;
   }
 
-  .left-col { display: flex; flex-direction: column; gap: 20px; height: 100%; }
+  .left-col { display: flex; flex-direction: column; gap: 20px; height: 100%; min-width: 0; }
   .left-col .measurements-card { flex: 1; display: flex; flex-direction: column; }
   .left-col .measurements-card .card-body { flex: 1; overflow-y: auto; }
-  .right-col { display: flex; flex-direction: column; gap: 20px; }
+  .right-col { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
 
   .csv-btn {
     width: 32px; height: 32px;
@@ -826,6 +830,30 @@ function updateRangeLabels() {
     .measurement-item .percentile-badge {
       grid-column: 1 / -1;
       justify-self: start;
+    }
+  }
+
+  @media (max-width: 360px) {
+    header {
+      padding-left: 10px;
+      padding-right: 10px;
+    }
+    .main {
+      padding-left: 6px;
+      padding-right: 6px;
+    }
+    .measurement-actions {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .measurement-actions .icon-btn {
+      min-height: 42px;
+    }
+    .sync-subtitle {
+      max-width: 170px;
+    }
+    .date-picker-button {
+      width: 42px;
+      flex-basis: 42px;
     }
   }
 </style>
