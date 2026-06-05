@@ -1217,14 +1217,19 @@ let state = {
 // Load from persistent browser storage.
 // Data survives refreshes, browser restarts, and app redeploys on the same device/browser.
 // Use the JSON backup buttons for an extra portable copy or to move data to another device.
+function getSavedRangeWeeks() {
+  const savedRange = Number(localStorage.getItem(RANGE_STORAGE_KEY));
+  return [13, 26, 52, 104].includes(savedRange) ? savedRange : null;
+}
+
 try {
   const saved = localStorage.getItem(STORAGE_KEY) || localStorage.getItem(LEGACY_STORAGE_KEY);
   if (saved) {
     const loaded = JSON.parse(saved);
     state = { ...state, ...loaded, version: 2 };
   }
-  const savedRange = Number(localStorage.getItem(RANGE_STORAGE_KEY));
-  if ([13, 26, 52, 104].includes(savedRange)) state.rangeWeeks = savedRange;
+  const savedRange = getSavedRangeWeeks();
+  if (savedRange) state.rangeWeeks = savedRange;
 } catch(e) {
   console.warn('Could not load saved baby tracker data', e);
 }
@@ -1957,7 +1962,8 @@ async function syncFromCloud() {
     state.birthDate = result.profile.birth_date || state.birthDate;
     state.gender = result.profile.gender || state.gender;
     state.unit = result.profile.unit || state.unit;
-    state.rangeWeeks = result.profile.range_weeks || state.rangeWeeks;
+    const localRange = getSavedRangeWeeks();
+    state.rangeWeeks = localRange || result.profile.range_weeks || state.rangeWeeks;
   }
   if (Array.isArray(result.measurements) && result.measurements.length) {
     state.measurements = result.measurements.map(m => ({ date: m.measured_on, weightKg: Number(m.weight_kg), ageWeeks: Number(m.age_weeks) }));
@@ -1967,6 +1973,7 @@ async function syncFromCloud() {
   if (state.name) document.getElementById('babyName').value = state.name;
   setGender(state.gender || 'boy', false);
   setUnit(state.unit || 'kg', false);
+  syncRangeSelect();
   renderBabyDisplay();
   renderMeasurements();
   renderChart();

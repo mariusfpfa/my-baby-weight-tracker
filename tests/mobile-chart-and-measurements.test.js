@@ -7,8 +7,11 @@ const css = (html.match(/<style>([\s\S]*?)<\/style>/) || [])[1] || '';
 assert.match(html, /<select[^>]+id="rangeSelect"/, 'chart period control should be a select dropdown');
 assert.doesNotMatch(html, /<button class="range-pill"[^>]+onclick="setRange\(/, 'chart period should not be rendered as four separate range buttons');
 assert.match(html, /const RANGE_STORAGE_KEY = 'babyChartRangeWeeks:v1';/, 'range selection should have its own localStorage key');
+assert.match(html, /function getSavedRangeWeeks\(\)/, 'range persistence should use a reusable saved-range helper');
 assert.match(html, /localStorage\.getItem\(RANGE_STORAGE_KEY\)/, 'initial state should read saved chart range from localStorage');
 assert.match(html, /localStorage\.setItem\(RANGE_STORAGE_KEY, String\(weeks\)\)/, 'setRange should persist the selected chart range');
+assert.doesNotMatch(html, /state\.rangeWeeks = result\.profile\.range_weeks \|\| state\.rangeWeeks/, 'cloud sync should not overwrite a locally saved chart range before rendering');
+assert.match(html, /const localRange = getSavedRangeWeeks\(\);[\s\S]*state\.rangeWeeks = localRange \|\| result\.profile\.range_weeks \|\| state\.rangeWeeks;[\s\S]*syncRangeSelect\(\);[\s\S]*renderChart\(\);/, 'syncFromCloud should re-apply the saved local range and keep dropdown/chart in sync');
 assert.match(html, /function syncRangeSelect\(\)/, 'range dropdown should stay in sync with state changes');
 assert.match(html, /if \(select\) select\.value = String\(state\.rangeWeeks\)/, 'syncRangeSelect should set the dropdown value from state');
 
