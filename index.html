@@ -566,6 +566,23 @@ function updateRangeLabels() {
   .baby-display-info h3 { font-size: 1rem; font-weight: 600; line-height: 1.2; color: var(--text); }
   .baby-display-info p { font-size: 0.75rem; color: var(--text-muted); margin-top: 3px; }
 
+  .measurement-card-header {
+    justify-content: space-between;
+    gap: 10px;
+  }
+  .measurement-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+  }
+  .measurement-actions {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    flex-shrink: 0;
+  }
+
   .icon-btn {
     width: 32px; height: 32px;
     border: 1.5px solid var(--border);
@@ -682,6 +699,135 @@ function updateRangeLabels() {
   .sync-status { color: var(--text-muted); font-size: 0.78rem; line-height: 1.35; margin-top: 8px; }
   .sync-status strong { color: var(--accent); }
   @media (min-width: 640px) { .sync-actions { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+
+  @media (max-width: 480px) {
+    header {
+      padding: 12px 14px;
+      gap: 8px;
+    }
+    header .logo {
+      width: 34px;
+      height: 34px;
+      border-radius: 9px;
+      font-size: 18px;
+    }
+    header h1 {
+      font-size: 1.05rem;
+      line-height: 1.05;
+    }
+    header p {
+      display: none;
+    }
+    .lang-toggle,
+    #themeToggle {
+      width: 36px !important;
+      height: 36px !important;
+      flex: 0 0 36px;
+      padding: 0;
+    }
+    .main {
+      padding: 14px 10px 28px;
+      gap: 14px;
+    }
+    .card {
+      border-radius: 12px;
+    }
+    .card-header {
+      padding: 14px;
+    }
+    .card-body {
+      padding: 14px;
+    }
+    .sync-row {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 8px;
+    }
+    .sync-row input {
+      min-width: 0;
+      margin-bottom: 0;
+    }
+    .sync-actions {
+      grid-template-columns: 1fr;
+    }
+    .sync-actions .btn-primary {
+      min-height: 42px;
+      font-size: 0.86rem;
+      padding: 10px 12px;
+    }
+    .sync-mini-actions {
+      align-items: flex-start;
+      flex-direction: column;
+    }
+    .sync-mini-actions > div {
+      width: 100%;
+      display: grid !important;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .sync-mini-actions .icon-btn {
+      width: 100%;
+      min-height: 40px;
+    }
+    .measurement-card-header {
+      align-items: stretch;
+      flex-direction: column;
+      padding-bottom: 12px;
+    }
+    .measurement-actions {
+      width: 100%;
+      display: grid;
+      grid-template-columns: repeat(4, minmax(38px, 1fr));
+      gap: 8px;
+    }
+    .measurement-actions .icon-btn {
+      width: 100%;
+      min-width: 0;
+      min-height: 40px;
+    }
+    .add-measurement-btn {
+      grid-column: 1 / -1;
+      justify-self: stretch;
+      min-height: 42px;
+      padding: 0 12px;
+    }
+    .add-measurement-btn span {
+      font-size: 0.88rem;
+    }
+    .add-form-wrap {
+      padding: 14px;
+    }
+    .add-form-row {
+      grid-template-columns: 1fr;
+      gap: 10px;
+    }
+    .range-pills {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+      padding: 12px 14px 0;
+    }
+    .range-pill {
+      width: 100%;
+      min-height: 38px;
+      padding: 8px 10px;
+      text-align: center;
+    }
+    .legend-grid {
+      padding: 12px 14px 14px;
+      gap: 8px 12px;
+    }
+    .chart-canvas-wrap {
+      height: 280px;
+    }
+    .measurement-item {
+      grid-template-columns: 1fr auto;
+      gap: 6px 8px;
+    }
+    .measurement-item .percentile-badge {
+      grid-column: 1 / -1;
+      justify-self: start;
+    }
+  }
 </style>
 </head>
 <body>
@@ -789,12 +935,12 @@ function updateRangeLabels() {
 
     <!-- Measurements (with inline Add form) -->
     <div class="card measurements-card">
-      <div class="card-header" style="justify-content:space-between;">
-        <div style="display:flex;align-items:center;gap:10px;">
+      <div class="card-header measurement-card-header">
+        <div class="measurement-title">
           <div class="card-icon">📋</div>
           <h2 data-i18n="measurements">Măsurători</h2>
         </div>
-        <div style="display:flex;gap:6px;align-items:center;">
+        <div class="measurement-actions">
           <button class="icon-btn" onclick="importCSV()" title="Import CSV measurements">📥</button>
           <button class="icon-btn" onclick="exportCSV()" title="Export CSV measurements">📤</button>
           <button class="icon-btn" onclick="importBackup()" title="Restore full backup">♻️</button>
