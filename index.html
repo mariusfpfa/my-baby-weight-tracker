@@ -120,9 +120,12 @@ function renderCalendar() {
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeCalendar(); });
 function updateRangeLabels() {
   const labels = lang === 'ro'
-    ? { pill13:'13 săpt.', pill26:'6 luni', pill52:'1 an', pill104:'2 ani' }
-    : { pill13:'13 weeks', pill26:'6 months', pill52:'1 year', pill104:'2 years' };
-  Object.entries(labels).forEach(([id, text]) => { const el = document.getElementById(id); if (el) el.textContent = text; });
+    ? { '13':'13 săpt.', '26':'6 luni', '52':'1 an', '104':'2 ani' }
+    : { '13':'13 weeks', '26':'6 months', '52':'1 year', '104':'2 years' };
+  Object.entries(labels).forEach(([value, text]) => {
+    const option = document.querySelector(`#rangeSelect option[value="${value}"]`);
+    if (option) option.textContent = text;
+  });
 }
 
 
@@ -432,6 +435,14 @@ function updateRangeLabels() {
     font-size: 0.85rem;
   }
 
+  .measurement-main { min-width: 0; }
+  .measurement-meta {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+  }
+
   .measurement-item .age-badge {
     font-size: 0.72rem;
     color: var(--text-muted);
@@ -464,6 +475,19 @@ function updateRangeLabels() {
     opacity: 0.5;
   }
 
+  .measurement-delete-btn {
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    justify-self: end;
+    align-self: center;
+    line-height: 1;
+  }
+
   .delete-btn:hover { color: #ef4444; }
 
   .empty-state {
@@ -486,29 +510,15 @@ function updateRangeLabels() {
     .chart-canvas-wrap { height: 300px; }
   }
 
-  .range-pills {
-    display: flex;
-    gap: 6px;
+  .range-select-wrap {
     padding: 14px 20px 0;
-    flex-wrap: wrap;
   }
 
-  .range-pill {
-    padding: 5px 12px;
-    border-radius: 99px;
-    font-size: 0.75rem;
-    font-weight: 600;
+  .range-select {
+    width: min(220px, 100%);
+    margin-bottom: 0;
+    font-weight: 700;
     cursor: pointer;
-    border: 1.5px solid var(--border);
-    background: var(--card2);
-    color: var(--text-muted);
-    transition: all 0.15s;
-  }
-
-  .range-pill.active {
-    background: var(--accent);
-    border-color: var(--accent);
-    color: #0d1a13;
   }
 
   .legend-grid {
@@ -644,8 +654,6 @@ function updateRangeLabels() {
   [data-theme="light"] .baby-avatar.girl { background: #fdf2f8; }
   [data-theme="light"] .icon-btn,
   [data-theme="light"] .csv-btn { background: var(--card2); }
-  [data-theme="light"] .range-pill { background: var(--card2); }
-  [data-theme="light"] .range-pill.active { color: #fff; }
   [data-theme="light"] .measurement-item { background: var(--card2); }
   [data-theme="light"] .btn-primary { color: #fff; }
   [data-theme="light"] .delete-btn { opacity: 0.4; }
@@ -804,17 +812,12 @@ function updateRangeLabels() {
       grid-template-columns: 1fr;
       gap: 10px;
     }
-    .range-pills {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 8px;
+    .range-select-wrap {
       padding: 12px 14px 0;
     }
-    .range-pill {
+    .range-select {
       width: 100%;
-      min-height: 38px;
-      padding: 8px 10px;
-      text-align: center;
+      min-height: 42px;
     }
     .legend-grid {
       padding: 12px 14px 14px;
@@ -827,8 +830,17 @@ function updateRangeLabels() {
       grid-template-columns: 1fr auto;
       gap: 6px 8px;
     }
+    .measurement-meta {
+      grid-column: 1;
+      flex-wrap: wrap;
+    }
+    .measurement-delete-btn {
+      grid-column: 2;
+      grid-row: 1 / span 2;
+      align-self: center;
+      justify-self: end;
+    }
     .measurement-item .percentile-badge {
-      grid-column: 1 / -1;
       justify-self: start;
     }
   }
@@ -1033,11 +1045,13 @@ function updateRangeLabels() {
         <h2 id="chartTitle">Greutate vs percentile WHO — Băiat</h2>
       </div>
 
-      <div class="range-pills">
-        <button class="range-pill active" onclick="setRange(13)" id="pill13">13 săpt.</button>
-        <button class="range-pill" onclick="setRange(26)" id="pill26">6 luni</button>
-        <button class="range-pill" onclick="setRange(52)" id="pill52">1 an</button>
-        <button class="range-pill" onclick="setRange(104)" id="pill104">2 ani</button>
+      <div class="range-select-wrap">
+        <select class="range-select" id="rangeSelect" aria-label="Chart period" onchange="setRange(Number(this.value))">
+          <option value="13">13 săpt.</option>
+          <option value="26">6 luni</option>
+          <option value="52">1 an</option>
+          <option value="104">2 ani</option>
+        </select>
       </div>
 
       <div class="chart-wrapper">
@@ -1184,6 +1198,7 @@ const WHO = {
 const STORAGE_KEY = 'babyWeightTracker:v2';
 const LEGACY_STORAGE_KEY = 'babyWeightTracker';
 const THEME_STORAGE_KEY = 'babyTrackerTheme';
+const RANGE_STORAGE_KEY = 'babyChartRangeWeeks:v1';
 const SYNC_API = 'https://mtjxpdenbiqaivfvqmyi.supabase.co/functions/v1/baby-api';
 const DEVICE_KEY_STORAGE = 'babyWeightDeviceKey:v1';
 const SYNC_SESSION_STORAGE = 'babyWeightSyncSession:v1';
@@ -1208,6 +1223,8 @@ try {
     const loaded = JSON.parse(saved);
     state = { ...state, ...loaded, version: 2 };
   }
+  const savedRange = Number(localStorage.getItem(RANGE_STORAGE_KEY));
+  if ([13, 26, 52, 104].includes(savedRange)) state.rangeWeeks = savedRange;
 } catch(e) {
   console.warn('Could not load saved baby tracker data', e);
 }
@@ -1237,6 +1254,7 @@ window.addEventListener('DOMContentLoaded', () => {
   if (state.name) document.getElementById('babyName').value = state.name;
   setGender(state.gender, false);
   setUnit(state.unit, false);
+  syncRangeSelect();
 
   // Show display or edit mode based on whether baby info is configured
   if (state.birthDate) {
@@ -1352,11 +1370,16 @@ function setUnit(u, doSave = true) {
 }
 
 // ─── RANGE ────────────────────────────────────────────────────────────────────
+function syncRangeSelect() {
+  const select = document.getElementById('rangeSelect');
+  if (select) select.value = String(state.rangeWeeks);
+}
+
 function setRange(weeks) {
-  state.rangeWeeks = weeks;
-  ['13','26','52','104'].forEach(w => {
-    document.getElementById('pill'+w).className = 'range-pill' + (weeks == w ? ' active' : '');
-  });
+  if (![13, 26, 52, 104].includes(Number(weeks))) weeks = 13;
+  state.rangeWeeks = Number(weeks);
+  syncRangeSelect();
+  localStorage.setItem(RANGE_STORAGE_KEY, String(weeks));
   renderChart();
 }
 
@@ -1468,15 +1491,15 @@ function renderMeasurements() {
     const pInfo = getPercentile(m.ageWeeks, m.weightKg, state.gender);
     return `
       <div class="measurement-item">
-        <div>
+        <div class="measurement-main">
           <div style="font-weight:500">${formatDateForInput(m.date)}</div>
           <div class="age-badge">${tr('age')}: ${weeks} ${tr('weeks')}</div>
         </div>
-        <div style="display:flex;align-items:center;gap:6px">
+        <div class="measurement-meta">
           <span class="weight-val">${disp}</span>
           <span class="percentile-badge" style="color:${pInfo.color};background:${pInfo.bg}">${pInfo.pct}</span>
         </div>
-        <button class="delete-btn" onclick="deleteMeasurement(${m._idx})" title="Delete">✕</button>
+        <button class="delete-btn measurement-delete-btn" onclick="deleteMeasurement(${m._idx})" title="Delete" aria-label="Delete measurement">✕</button>
       </div>`;
   }).join('');
 
