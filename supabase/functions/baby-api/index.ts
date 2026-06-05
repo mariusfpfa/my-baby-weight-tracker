@@ -127,7 +127,7 @@ async function route(req: Request) {
     if (reqError || !request) return json({ error: 'Request not found.' }, 404);
     const { data: device, error: deviceError } = await supabase.from('devices').insert({ account_id: session.account_id, name: request.device_name, public_key: request.public_key, approved: true, owner: false, approved_at: new Date().toISOString() }).select('id, name').single();
     if (deviceError) return json({ error: deviceError.message }, 500);
-    await supabase.from('device_requests').update({ status: 'approved', decided_at: new Date().toISOString(), decided_by_device_id: session.device_id }).eq('id', requestId);
+    await supabase.from('device_requests').update({ status: 'approved', decided_at: new Date().toISOString(), decided_by_device_id: session.device_id, approved_device_id: device.id }).eq('id', requestId);
     return json({ device });
   }
 
@@ -155,10 +155,12 @@ async function route(req: Request) {
 
   if (action === 'request-status') {
     const requestId = String(body.requestId || '');
-    const { data: request } = await supabase.from('device_requests').select('id, status, account_id').eq('id', requestId).maybeSingle();
+    const { data: request } = await supabase.from('device_requests').select('id, status, account_id, approved_device_id').eq('id', requestId).maybeSingle();
     if (!request) return json({ error: 'Request not found.' }, 404);
     if (request.status !== 'approved') return json({ status: request.status });
-    const { data: device } = await supabase.from('devices').select('id, name').eq('account_id', request.account_id).order('created_at', { ascending: false }).limit(1).single();
+    if (!request.approved_device_id) return json({ error: 'Approved request is missing its device id. Please request access again.' }, 409);
+    const { data: device } = await supabase.from('devices').select('id, name').eq('id', request.approved_device_id).eq('account_id', request.account_id).eq('approved', true).single();
+    if (!device) return json({ error: 'Approved device not found.' }, 404);
     const session = await createSession(request.account_id, device.id);
     return json({ status: 'approved', device, ...session });
   }

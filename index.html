@@ -1694,7 +1694,12 @@ async function createAccount() {
 async function loginDevice() {
   try {
     const username = usernameValue();
-    const session = getSession();
+    let session = getSession();
+    if (session?.pendingRequestId && !session?.deviceId) {
+      await checkRequestStatus();
+      session = getSession();
+      if (session?.sessionToken) return;
+    }
     if (!session?.deviceId) throw new Error('This device has no approved device id yet. Use Request access first.');
     const ch = await api('login-challenge', { username, deviceId: session.deviceId });
     const signature = await signChallenge(ch.challenge);
